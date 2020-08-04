@@ -25,7 +25,7 @@ blocks:
       jobs:
         - name: Test
           commands:
-            - go test github.com/jmattson4/go-sample-api
+            - go test go-sample-api
       env_vars:
         - name: INSTANCE_CONNECTION_NAME
           value: 'canadian-news-scraper:us-central1:canadian-news-database'
