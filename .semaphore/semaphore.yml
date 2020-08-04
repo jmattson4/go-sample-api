@@ -25,7 +25,7 @@ blocks:
       jobs:
         - name: Test
           commands:
-            - go test ./main
+            - go test main
       env_vars:
         - name: INSTANCE_CONNECTION_NAME
           value: 'canadian-news-scraper:us-central1:canadian-news-database'
