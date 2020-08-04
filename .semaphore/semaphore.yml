@@ -30,10 +30,18 @@ blocks:
           value: news_scraper
         - name: PASSWORD
           value: xVyZawAsSdGuGbkwAW
+        - name: GO111
+          value: 'on'
+        - name: GOFLAGS
+          value: '-mod=vendor'
   - name: Build
     task:
       jobs:
         - name: Build
           commands:
             - go build -v -o go-mux-api
-            - artifact push project --force go-sample-api
+      env_vars:
+        - name: GO111MODULE
+          value: 'on'
+        - name: GOFLAGS
+          value: '-mod=vendor'
