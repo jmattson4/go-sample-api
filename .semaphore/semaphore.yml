@@ -21,6 +21,15 @@ blocks:
         - name: Test
           commands:
             - go test ./...
+      env_vars:
+        - name: INSTANCE_CONNECTION_NAME
+          value: 'canadian-news-scraper:us-central1:canadian-news-database'
+        - name: DATABASE_NAME
+          value: canadian-news-database
+        - name: DATABASE_USER
+          value: news_scraper
+        - name: PASSWORD
+          value: xVyZawAsSdGuGbkwAW
   - name: Build
     task:
       jobs:
