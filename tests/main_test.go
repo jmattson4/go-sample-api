@@ -165,12 +165,15 @@ func TestDeleteProduct(t *testing.T) {
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
+//this function checks the response code of expected against actual and if they dont match then
+//	it throws a testing error
 func checkResponseCode(t *testing.T, expected, actual int) {
 	if expected != actual {
 		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
 	}
 }
 
+//executes the request against the http server
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	a.Router.ServeHTTP(rr, req)

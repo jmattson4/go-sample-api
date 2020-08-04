@@ -1,6 +1,6 @@
 // app.go
 
-package main
+package app
 
 import (
 	"database/sql"
@@ -10,11 +10,15 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jmattson4/go-sample-api/models"
+
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/gorilla/mux"
+
 	_ "github.com/lib/pq"
 )
 
+//App ...
 type App struct {
 	Router *mux.Router
 	DB     *sql.DB
