@@ -16,13 +16,9 @@ type ModelController struct {
 	DB *sql.DB
 }
 
-//InitModelController ...
-func InitModelController(db *sql.DB) *ModelController {
-	var mc ModelController
-
+//InitController ...
+func (mc *ModelController) InitController(db *sql.DB) {
 	mc.DB = db
-
-	return &mc
 }
 
 // GetProduct ...
@@ -30,7 +26,8 @@ func (mc *ModelController) GetProduct(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		util.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
+		response := util.Message(false, "Invalid product ID")
+		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 
@@ -38,9 +35,11 @@ func (mc *ModelController) GetProduct(w http.ResponseWriter, r *http.Request) {
 	if err := p.GetProduct(mc.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			util.RespondWithError(w, http.StatusNotFound, "Product not found")
+			response := util.Message(false, "Invalid product ID")
+			util.RespondWithError(w, http.StatusNotFound, response)
 		default:
-			util.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			response := util.Message(false, err.Error())
+			util.RespondWithError(w, http.StatusInternalServerError, response)
 		}
 		return
 	}
@@ -62,7 +61,8 @@ func (mc *ModelController) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := m.GetProducts(mc.DB, start, count)
 	if err != nil {
-		util.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		response := util.Message(false, err.Error())
+		util.RespondWithError(w, http.StatusInternalServerError, response)
 		return
 	}
 
@@ -77,14 +77,16 @@ func (mc *ModelController) CreateProduct(w http.ResponseWriter, r *http.Request)
 	//decodes the json body from the request into the newly created product struct.
 	//	if there is errors with the decoding the route responds with a HTTP 400 response
 	if err := decoder.Decode(&p); err != nil {
-		util.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		response := util.Message(false, "Invalid request payload")
+		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 	defer r.Body.Close()
 	//attempts to create the product which was sent via json into the
 	// database. If there is an error it throws an HTTP 500 error
 	if err := p.CreateProduct(mc.DB); err != nil {
-		util.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		response := util.Message(false, "Invalid request payload")
+		util.RespondWithError(w, http.StatusInternalServerError, response)
 		return
 	}
 	//if everything is okay then api responds with 201 status created.
@@ -97,14 +99,16 @@ func (mc *ModelController) UpdateProduct(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		util.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
+		response := util.Message(false, "Invalid request payload")
+		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 
 	var p m.Product
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
-		util.RespondWithError(w, http.StatusBadRequest, "Invalid resquest payload")
+		response := util.Message(false, "Invalid request payload")
+		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 	defer r.Body.Close()
@@ -123,7 +127,8 @@ func (mc *ModelController) DeleteProduct(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		util.RespondWithError(w, http.StatusBadRequest, "Invalid Product ID")
+		response := util.Message(false, "Invalid Product ID")
+		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 
