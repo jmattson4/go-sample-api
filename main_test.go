@@ -12,10 +12,11 @@ import (
 	"strconv"
 	"testing"
 
+	a "github.com/jmattson4/go-sample-api/app"
 	"github.com/joho/godotenv"
 )
 
-var a App
+var app a.App
 
 func TestMain(m *testing.M) {
 	err := godotenv.Load()
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("Error loading .env file")
 	}
 
-	a.Initialize(
+	app.Initialize(
 		os.Getenv("DATABASE_USER"),
 		os.Getenv("PASSWORD"),
 		os.Getenv("DATABASE_NAME"),
@@ -176,7 +177,7 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 //executes the request against the http server
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
-	a.Router.ServeHTTP(rr, req)
+	app.Router.ServeHTTP(rr, req)
 
 	return rr
 }
@@ -187,19 +188,19 @@ func addProducts(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO products(name, price) VALUES($1, $2)", "Product "+strconv.Itoa(i), (i+1.0)*10)
+		app.DB.Exec("INSERT INTO products(name, price) VALUES($1, $2)", "Product "+strconv.Itoa(i), (i+1.0)*10)
 	}
 }
 
 func ensureTableExists() {
-	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
+	if _, err := app.DB.Exec(tableCreationQuery); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func clearTable() {
-	a.DB.Exec("DELETE FROM products")
-	a.DB.Exec("ALTER SEQUENCE products_id_seq RESTART WITH 1")
+	app.DB.Exec("DELETE FROM products")
+	app.DB.Exec("ALTER SEQUENCE products_id_seq RESTART WITH 1")
 }
 
 const tableCreationQuery = `CREATE TABLE IF NOT EXISTS products

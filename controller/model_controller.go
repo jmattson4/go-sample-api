@@ -1,60 +1,4 @@
-// app.go
-
-package app
-
-import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-
-	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
-	"github.com/gorilla/mux"
-	m "github.com/jmattson4/go-sample-api/model"
-	_ "github.com/lib/pq"
-)
-
-//App models the application.
-type App struct {
-	Router *mux.Router
-	DB     *sql.DB
-}
-
-//Initialize To be used before application is run in order to connect to the database and create routes.
-func (a *App) Initialize(user string, password string, dbname string, instanceConnectionName string) {
-	connectionString := fmt.Sprintf("host=%s dbname=%s user=%s password=%s sslmode=disable",
-		instanceConnectionName,
-		dbname,
-		user,
-		password)
-
-	var err error
-	a.DB, err = sql.Open("cloudsqlpostgres", connectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	a.Router = mux.NewRouter()
-
-	a.initializeRoutes()
-}
-
-//InitializeRoutes to be used to create all the routes on the API
-func (a *App) initializeRoutes() {
-	a.Router.HandleFunc("/products", a.getProducts).Methods("GET")
-	a.Router.HandleFunc("/product", a.createProduct).Methods("POST")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.getProduct).Methods("GET")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.updateProduct).Methods("PUT")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.deleteProduct).Methods("DELETE")
-}
-
-//Run To be used to start up the server. Use after initilization.
-func (a *App) Run(addr string) {
-	log.Print("application starting on port 8010")
-	log.Fatal(http.ListenAndServe(":8010", a.Router))
-}
+package controller
 
 func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -158,16 +102,4 @@ func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
-}
-
-func respondWithError(w http.ResponseWriter, code int, message string) {
-	respondWithJSON(w, code, map[string]string{"error": message})
-}
-
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
 }

@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	a "github.com/jmattson4/go-sample-api/app"
+
 	"github.com/joho/godotenv"
 )
 
@@ -14,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	a := App{}
+	a := a.App{}
 	a.Initialize(
 		os.Getenv("DATABASE_USER"),
 		os.Getenv("PASSWORD"),
