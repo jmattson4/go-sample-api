@@ -2,11 +2,14 @@ package model
 
 import (
 	"database/sql"
+
+	"github.com/jinzhu/gorm"
 )
 
 //Product ...
 // This struct is used to model the Product Table in the PostGRESQL database
 type Product struct {
+	gorm.Model
 	ID    int     `json:"id"`
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`

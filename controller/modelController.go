@@ -115,7 +115,8 @@ func (mc *ModelController) UpdateProduct(w http.ResponseWriter, r *http.Request)
 	p.ID = id
 
 	if err := p.UpdateProduct(mc.DB); err != nil {
-		util.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		response := util.Message(false, err.Error())
+		util.RespondWithError(w, http.StatusInternalServerError, response)
 		return
 	}
 
@@ -134,7 +135,8 @@ func (mc *ModelController) DeleteProduct(w http.ResponseWriter, r *http.Request)
 
 	p := m.Product{ID: id}
 	if err := p.DeleteProduct(mc.DB); err != nil {
-		util.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		response := util.Message(false, err.Error())
+		util.RespondWithError(w, http.StatusInternalServerError, response)
 		return
 	}
 

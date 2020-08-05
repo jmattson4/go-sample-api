@@ -4,10 +4,9 @@ package main
 
 import (
 	"log"
-	"os"
 
 	a "github.com/jmattson4/go-sample-api/app"
-
+	db "github.com/jmattson4/go-sample-api/database"
 	"github.com/joho/godotenv"
 )
 
@@ -17,11 +16,9 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	a := a.App{}
-	a.Initialize(
-		os.Getenv("DATABASE_USER"),
-		os.Getenv("PASSWORD"),
-		os.Getenv("DATABASE_NAME"),
-		os.Getenv("INSTANCE_CONNECTION_NAME"))
+	defer db.GetDB().Close()
+	defer db.GetUserDB().Close()
+	a.Initialize()
 
 	a.Run(":8010")
 }
