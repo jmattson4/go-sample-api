@@ -6,7 +6,7 @@ import (
 	"log"
 
 	a "github.com/jmattson4/go-sample-api/app"
-	db "github.com/jmattson4/go-sample-api/database"
+	m "github.com/jmattson4/go-sample-api/model"
 	"github.com/joho/godotenv"
 )
 
@@ -16,8 +16,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	a := a.App{}
-	defer db.GetDB().Close()
-	defer db.GetUserDB().Close()
+	defer m.GetDB().Close()
+	defer m.GetUserDB().Close()
 	a.Initialize()
 
 	a.Run(":8010")

@@ -6,7 +6,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	"github.com/jmattson4/go-sample-api/database"
 	u "github.com/jmattson4/go-sample-api/util"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -29,9 +28,9 @@ type Account struct {
 
 //CheckIfTablesExist ...
 func CheckIfTablesExist() {
-	accountExists := database.GetUserDB().HasTable("accounts")
+	accountExists := GetUserDB().HasTable("accounts")
 	if !accountExists {
-		database.GetUserDB().CreateTable(Account{})
+		GetUserDB().CreateTable(Account{})
 	}
 }
 
@@ -50,7 +49,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	temp := &Account{}
 
 	//check for errors and duplicate emails
-	err := database.GetUserDB().Table("accounts").Where("email = ?", account.Email).First(temp).Error
+	err := GetUserDB().Table("accounts").Where("email = ?", account.Email).First(temp).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
@@ -71,8 +70,11 @@ func (account *Account) Create() map[string]interface{} {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 
-	database.GetUserDB().Create(account)
+	err := GetUserDB().NewRecord(account)
 
+	if err {
+		return u.Message(false, "Failed to create account, Record already exists.")
+	}
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
@@ -94,7 +96,7 @@ func (account *Account) Create() map[string]interface{} {
 func Login(email, password string) map[string]interface{} {
 
 	account := &Account{}
-	err := database.GetUserDB().Table("accounts").Where("email = ?", email).First(account).Error
+	err := GetUserDB().Table("accounts").Where("email = ?", email).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return u.Message(false, "Email address not found")
@@ -122,9 +124,8 @@ func Login(email, password string) map[string]interface{} {
 
 //GetUser ... Gets the user from the userID
 func GetUser(u uint) *Account {
-
 	acc := &Account{}
-	database.GetUserDB().Table("accounts").Where("id = ?", u).First(acc)
+	GetUserDB().Table("accounts").Where("id = ?", u).First(acc)
 	if acc.Email == "" { //User not found!
 		return nil
 	}

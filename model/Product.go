@@ -1,8 +1,6 @@
 package model
 
 import (
-	"database/sql"
-
 	"github.com/jinzhu/gorm"
 )
 
@@ -10,18 +8,17 @@ import (
 // This struct is used to model the Product Table in the PostGRESQL database
 type Product struct {
 	gorm.Model
-	ID    int     `json:"id"`
 	Name  string  `json:"name"`
-	Price float64 `json:"price"`
+	Price float64 `json:"price,string"`
 }
 
 // GetProduct ...
 // Parameters: db *sql.DB
 // Description: This function is passed the database which it then
 // 	uses to get the rest of the Product Data from the database.
-func (p *Product) GetProduct(db *sql.DB) error {
-	return db.QueryRow("SELECT name, price FROM products WHERE id=$1",
-		p.ID).Scan(&p.Name, &p.Price)
+func (p *Product) GetProduct() error {
+	err := GetDB().Where("id = ?", p.ID).First(p).Error
+	return err
 }
 
 // UpdateProduct ...
@@ -29,11 +26,8 @@ func (p *Product) GetProduct(db *sql.DB) error {
 // Description: This function is passed the database which it then
 //	uses to update the product based upon the current values of
 //	Name and Price.
-func (p *Product) UpdateProduct(db *sql.DB) error {
-	_, err :=
-		db.Exec("UPDATE products SET name=$1, price=$2 WHERE id=$3",
-			p.Name, p.Price, p.ID)
-
+func (p *Product) UpdateProduct() error {
+	err := GetDB().Model(p).Update(map[string]interface{}{"name": p.Name, "price": p.Price}).Error
 	return err
 }
 
@@ -41,9 +35,13 @@ func (p *Product) UpdateProduct(db *sql.DB) error {
 // Parameters: db. *sql.DB
 // Description: This function is passed the database which it then
 //	uses to delete the product by the product ID/
-func (p *Product) DeleteProduct(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM products WHERE id=$1", p.ID)
+func (p *Product) DeleteProduct() error {
+	err := GetDB().Table("products").Delete(p).Error
+	return err
+}
 
+func (p *Product) HardDeleteProduct() error {
+	err := GetDB().Table("products").Unscoped().Delete(p).Error
 	return err
 }
 
@@ -55,10 +53,17 @@ func (p *Product) DeleteProduct(db *sql.DB) error {
 //	function .Scan can use be passed the pointer to the Product ID
 //	value and then update that value to the newly created Product ID from
 //	the database.
-func (p *Product) CreateProduct(db *sql.DB) error {
-	err := db.QueryRow(
-		"INSERT INTO products(name, price) VALUES($1, $2) RETURNING id",
-		p.Name, p.Price).Scan(&p.ID)
+func (p *Product) CreateProduct() error {
+	err := GetDB().Create(p).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//GetDeletedProducts ... This function retrieves soft deleted items.
+func GetDeletedProducts(start, count int, p *[]Product) error {
+	err := GetDB().Unscoped().Offset(start).Limit(count).Find(p).Error
 
 	if err != nil {
 		return err
@@ -71,26 +76,13 @@ func (p *Product) CreateProduct(db *sql.DB) error {
 // Parameters: db *sql.DB
 // Description: This function is passed the Database, a start value, and a count value.
 //	This
-func GetProducts(db *sql.DB, start, count int) ([]Product, error) {
-	rows, err := db.Query(
-		"SELECT id, name,  price FROM products LIMIT $1 OFFSET $2",
-		count, start)
+func GetProducts(start, count int, p *[]Product) error {
+
+	err := GetDB().Offset(start).Limit(count).Find(p).Error
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	defer rows.Close()
-
-	products := []Product{}
-
-	for rows.Next() {
-		var p Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
-			return nil, err
-		}
-		products = append(products, p)
-	}
-
-	return products, nil
+	return nil
 }

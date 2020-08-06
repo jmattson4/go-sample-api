@@ -1,4 +1,4 @@
-package database
+package model
 
 import (
 	"fmt"
@@ -43,7 +43,7 @@ func init() {
 
 	db = conn
 	userDB = userConn
-	//db.Debug().AutoMigrate(&model.Account{}, &Contact{}) //Database migration
+	db.Debug().AutoMigrate(&Account{}, &Product{}) //Database migration
 }
 
 //GetDB returns a handle to the DB object

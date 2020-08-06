@@ -17,7 +17,7 @@ var CreateAccount = func(w http.ResponseWriter, r *http.Request) {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Invalid request"))
 		return
 	}
-
+	defer r.Body.Close()
 	resp := account.Create() //Create account
 	u.RespondWithJSON(w, http.StatusOK, resp)
 }
