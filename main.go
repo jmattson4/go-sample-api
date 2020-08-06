@@ -7,6 +7,7 @@ import (
 
 	a "github.com/jmattson4/go-sample-api/app"
 	m "github.com/jmattson4/go-sample-api/model"
+	sec "github.com/jmattson4/go-sample-api/security"
 	"github.com/joho/godotenv"
 )
 
@@ -15,10 +16,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	a := a.App{}
 	defer m.GetDB().Close()
 	defer m.GetUserDB().Close()
-	a.Initialize()
+	enforcer, err := sec.InitAuthorizationEnforcer()
+	if err != nil {
+		log.Fatal("Error Getting Auth Enforcer: %v", err)
+	} else {
+		a := a.App{}
 
-	a.Run(":8010")
+		a.Initialize(enforcer)
+
+		a.Run(":8010")
+	}
 }

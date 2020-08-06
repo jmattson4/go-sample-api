@@ -23,6 +23,7 @@ type Account struct {
 	gorm.Model
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 	Token    string `json:"token";sql:"-"`
 }
 
@@ -69,11 +70,12 @@ func (account *Account) Create() map[string]interface{} {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
+	account.Role = "user"
 
-	err := GetUserDB().NewRecord(account)
+	err := GetUserDB().Create(account).Error
 
-	if err {
-		return u.Message(false, "Failed to create account, Record already exists.")
+	if err != nil {
+		return u.Message(false, err.Error())
 	}
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
@@ -129,7 +131,6 @@ func GetUser(u uint) *Account {
 	if acc.Email == "" { //User not found!
 		return nil
 	}
-
 	acc.Password = ""
 	return acc
 }

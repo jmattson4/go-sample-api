@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/gorilla/mux"
 	c "github.com/jmattson4/go-sample-api/controller"
 	_ "github.com/lib/pq"
@@ -14,20 +15,16 @@ import (
 
 //App models the application.
 type App struct {
-	Router *mux.Router
-	DB     *sql.DB
+	Router   *mux.Router
+	DB       *sql.DB
+	Enforcer *casbin.Enforcer
 }
 
 //Initialize To be used before application is run in order to connect to the database and create routes.
-func (a *App) Initialize() {
+func (a *App) Initialize(enf *casbin.Enforcer) {
 
 	a.Router = mux.NewRouter()
-	var err error
-	if err != nil {
-		log.Fatal("Database Error: Initialization failed.")
-		defer a.DB.Close()
-		return
-	}
+	a.Enforcer = enf
 
 	a.initializeRoutes()
 }
@@ -36,12 +33,14 @@ func (a *App) Initialize() {
 func (a *App) initializeRoutes() {
 
 	a.Router.Use(JwtAuthentication)
-	a.Router.HandleFunc("/products", c.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/product", c.CreateProduct).Methods("POST")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", c.GetProduct).Methods("GET")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", c.UpdateProduct).Methods("PUT")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", c.DeleteProduct).Methods("DELETE")
-	a.Router.HandleFunc("/products/deleted", c.ShowDeletedProducts).Methods("GET")
+	a.Router.Use(Authorize(a.Enforcer))
+
+	a.Router.HandleFunc("/api/products", c.GetProducts).Methods("GET")
+	a.Router.HandleFunc("/api/product", c.CreateProduct).Methods("POST")
+	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.GetProduct).Methods("GET")
+	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.UpdateProduct).Methods("PUT")
+	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.DeleteProduct).Methods("DELETE")
+	a.Router.HandleFunc("/api/products/deleted", c.ShowDeletedProducts).Methods("GET")
 
 	a.Router.HandleFunc("/api/user/new", c.CreateAccount).Methods("POST")
 	a.Router.HandleFunc("/api/user/login", c.Authenticate).Methods("POST")

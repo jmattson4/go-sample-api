@@ -1,0 +1,4 @@
+p, admin, /*, *
+p, anonymous, /api/user/new, (POST)
+p, user, /api/user/login, (POST)
+p, user, /api/user/*, (GET)
