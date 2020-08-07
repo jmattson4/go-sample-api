@@ -2,32 +2,28 @@ package model
 
 import (
 	"fmt"
-	"log"
-	"os"
+
+	"github.com/jmattson4/go-sample-api/util"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/joho/godotenv"
 )
 
 var db *gorm.DB
 var userDB *gorm.DB //database
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	env := util.GetEnv()
 
-	username := os.Getenv("DATABASE_USER")
-	password := os.Getenv("DATABASE_PASSWORD")
-	dbName := os.Getenv("DATABASE_NAME")
-	dbHost := os.Getenv("INSTANCE_CONNECTION_NAME")
+	username := env.DatabaseUser
+	password := env.DatabasePassword
+	dbName := env.DatabaseName
+	dbHost := env.InstanceConnectionName
 
-	accountUsername := os.Getenv("ACCOUNT_USER")
-	accountPassword := os.Getenv("ACCOUNT_PASSWORD")
-	accountDBName := os.Getenv("ACCOUNT_DATABASE_NAME")
+	accountUsername := env.AccountUser
+	accountPassword := env.AccountPassword
+	accountDBName := env.AccountDatabaseName
 
 	dbURI := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password) //Build connection string
 	db2URI := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, accountUsername, accountDBName, accountPassword)
@@ -43,7 +39,7 @@ func init() {
 
 	db = conn
 	userDB = userConn
-	db.Debug().AutoMigrate(&Account{}, &Product{}) //Database migration
+	db.Debug().AutoMigrate(&Account{}, &Product{}, &NewsData{}) //Database migration
 }
 
 //GetDB returns a handle to the DB object
