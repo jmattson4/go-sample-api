@@ -7,20 +7,31 @@ import (
 //NewsData ....
 type NewsData struct {
 	gorm.Model
-	ArticleLink string `json:"articleLink" gorm:"not null"`
-	ArticleText string `json:"articleText"`
-	ImageURL    string `json:"imageURL"`
-	Paragraph   string `json:"paragraph"`
+	ArticleLink   string `json:"articleLink" gorm:"not null"`
+	ArticleText   string `json:"articleText"`
+	ImageURL      string `json:"imageURL"`
+	Paragraph     string `json:"paragraph"`
+	WebsiteName   string `json:"websiteName"`
+	ArticleNumber uint   `json:"articleNumber"`
+}
+
+//NewsDataBasicInit ...
+//Description: Simple Factory
+func NewsDataBasicInit() *NewsData {
+	news := &NewsData{}
+	return news
 }
 
 //NewsDataInit ...
 ///Description: factory function used to init  a NewsData struct
-func NewsDataInit(al string, at string, img string, p string) *NewsData {
+func NewsDataInit(al string, at string, img string, p string, webN string, artN uint) *NewsData {
 	news := &NewsData{
-		ArticleLink: al,
-		ArticleText: at,
-		ImageURL:    img,
-		Paragraph:   p,
+		ArticleLink:   al,
+		ArticleText:   at,
+		ImageURL:      img,
+		Paragraph:     p,
+		WebsiteName:   webN,
+		ArticleNumber: artN,
 	}
 	return news
 }
@@ -49,12 +60,31 @@ func (nd *NewsData) GetNewsByArticleLink() error {
 	return err
 }
 
-// GetMultiple ...
+// GetNewsByWebNameAndID : This function grabs the First News Article by website namd and article Link
+func (nd *NewsData) GetNewsByWebNameAndID() error {
+	err := GetDB().Where("website_name = ? AND id = ?", nd.WebsiteName, nd.ID).First(nd).Error
+	return err
+}
+
+// GetMultipleNews ...
 // Description: Given  a start, a count and a Newsdata Slice pointer it grabs the amount
 //	within the start -> count interval.
-func GetMultiple(start, count int, p *[]NewsData) error {
+func GetMultipleNews(start, count int, p *[]NewsData) error {
 
 	err := GetDB().Offset(start).Limit(count).Find(p).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//GetMultipleNewsByWebName ...
+//Description: Essentially get multiple but also passed a WebName to use in the query.
+func GetMultipleNewsByWebName(start, count int, p *[]NewsData, webName string) error {
+
+	err := GetDB().Offset(start).Limit(count).Where("website_name = ?", webName).Find(p).Error
 
 	if err != nil {
 		return err
@@ -106,33 +136,26 @@ func GetDeleted(start, count int, p *[]Product) error {
 
 //ProcessNewsData : This function is used to process News Data from various sorces and save them into the Database.
 func ProcessNewsData(
-	processAmount int,
+	processAmount uint,
+	websiteName string,
 	articleLink []string,
 	articleText []string,
 	imageURL []string,
-	paragraphs []string) {
+	paragraphs []string) error {
 
-	//make sure that the process amount cannot be higher than the actual provided articles
-	if processAmount > len(articleLink) {
-		processAmount = len(articleLink)
+	if processAmount > uint(len(articleLink)) {
+		processAmount = uint(len(articleLink))
 	}
 	newsDataSlice := []*NewsData{}
-	for i := 1; i <= processAmount; i++ {
-		newsData := NewsDataInit(articleLink[i], articleText[i], imageURL[i], paragraphs[i-1])
+	for i := uint(1); i < processAmount; i++ {
+		newsData := NewsDataInit(articleLink[i], articleText[i], imageURL[i], paragraphs[i-1], websiteName, i)
 		newsDataSlice = append(newsDataSlice, newsData)
 	}
-	//insertCommand := fmt.Sprintf("INSERT INTO news_data (article_link, article_text, image_url, paragraph) VALUES %s ", strings.Join(valueStrings, ","))
-	//fmt.Println(insertCommand)
-	funcSlice := []func() error{}
-	funcSlice = append(funcSlice, createFromSlice(newsDataSlice, 0, 25))
-	transaction := database.Transactio(GetDb())
-
-}
-
-func createFromSlice(newsDataSlice []*NewsData, min int, max int) error {
-	for i := min; min < max; i++ {
-		err := GetDB().Create(newsDataSlice[i]).Error
+	for i := 0; i < len(newsDataSlice); i++ {
+		newsD := newsDataSlice[i]
+		err := GetDB().Create(newsD).Error
 		if err != nil {
+			GetDB().Rollback()
 			return err
 		}
 	}

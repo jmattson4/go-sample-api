@@ -39,6 +39,7 @@ func init() {
 
 	db = conn
 	userDB = userConn
+
 	db.Debug().AutoMigrate(&Account{}, &Product{}, &NewsData{}) //Database migration
 }
 

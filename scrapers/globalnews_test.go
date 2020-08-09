@@ -7,7 +7,7 @@ import (
 )
 
 func TestMainPageScrape(t *testing.T) {
-	scrapeData := scrapers.MainPageScrape()
+	scrapeData := scrapers.GlobalNewsScrape()
 	checkScrapeSize(t, 50, len(scrapeData.ArticleLink))
 	checkScrapeSize(t, 50, len(scrapeData.ImageURL))
 	checkScrapeSize(t, 50, len(scrapeData.Paragraphs))

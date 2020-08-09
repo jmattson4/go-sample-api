@@ -30,7 +30,7 @@ func newGlobalNewsData(articleLink []string, text []string, imageURL []string, p
 
 //MainPageScrape ... This scrapes the mainpage of globalnew.ca returning
 //	the links, text and img links of the top stories for the day.
-func MainPageScrape() *GlobalNewsData {
+func GlobalNewsScrape() *GlobalNewsData {
 	doc, err := goquery.NewDocument("https://globalnews.ca")
 	if err != nil {
 		log.Fatal(err)

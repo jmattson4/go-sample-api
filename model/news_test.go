@@ -9,7 +9,7 @@ import (
 var news *model.NewsData
 
 func TestCreate(t *testing.T) {
-	news = model.NewsDataInit("TestArticleLink4", "TestArticleText", "tst/art/img/link", "Test Paragraphs")
+	news = model.NewsDataInit("TestArticleLink4", "TestArticleText", "tst/art/img/link", "Test Paragraphs", "testWeb")
 	createErr := news.Create()
 	if createErr != nil {
 		t.Errorf("Error Create did not occur because: %v", createErr)

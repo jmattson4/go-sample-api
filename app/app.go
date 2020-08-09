@@ -10,7 +10,6 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gorilla/mux"
 	c "github.com/jmattson4/go-sample-api/controller"
-	_ "github.com/lib/pq"
 )
 
 //App models the application.
@@ -26,14 +25,23 @@ func (a *App) Initialize(enf *casbin.Enforcer) {
 	a.Router = mux.NewRouter()
 	a.Enforcer = enf
 
+	a.initializeMiddleware()
+	a.initializeRoutes()
+}
+
+//Initialize To be used before application is run in order to connect to the database and create routes.
+func (a *App) InitializeTesting() {
+
+	a.Router = mux.NewRouter()
+
 	a.initializeRoutes()
 }
 
 //InitializeRoutes to be used to create all the routes on the API
 func (a *App) initializeRoutes() {
 
-	a.Router.Use(JwtAuthentication)
-	a.Router.Use(Authorize(a.Enforcer))
+	a.Router.HandleFunc("/api/news/{newsname}", c.GetNewsByWebName).Methods("GET")
+	a.Router.HandleFunc("/api/news/{newsname}/{id:[0-9]+}", c.GetNewsArticleByID).Methods("GET")
 
 	a.Router.HandleFunc("/api/products", c.GetProducts).Methods("GET")
 	a.Router.HandleFunc("/api/product", c.CreateProduct).Methods("POST")
@@ -46,8 +54,13 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/api/user/login", c.Authenticate).Methods("POST")
 }
 
+func (a *App) initializeMiddleware() {
+	a.Router.Use(JwtAuthentication)
+	a.Router.Use(Authorize(a.Enforcer))
+}
+
 //Run To be used to start up the server. Use after initilization.
 func (a *App) Run(addr string) {
 	log.Print("application starting on port 8010")
-	log.Fatal(http.ListenAndServe(":8010", a.Router))
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
