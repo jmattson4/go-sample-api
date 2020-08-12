@@ -14,6 +14,5 @@ require (
 	github.com/lib/pq v1.8.0
 	github.com/robfig/cron/v3 v3.0.0
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	gorm.io/gorm v0.2.23
 )

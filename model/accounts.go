@@ -3,6 +3,7 @@ package model
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
@@ -82,9 +83,7 @@ func (account *Account) Create() map[string]interface{} {
 	}
 
 	//Create new JWT token for the newly registered account
-	tk := &Token{UserID: account.ID}
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	tokenString, _ := CreateToken(account.ID)
 	account.Token = tokenString
 
 	account.Password = "" //delete password
@@ -114,14 +113,28 @@ func Login(email, password string) map[string]interface{} {
 	account.Password = ""
 
 	//Create JWT token
-	tk := &Token{UserID: account.ID}
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	tokenString, _ := CreateToken(account.ID)
 	account.Token = tokenString //Store the token in the response
 
 	resp := u.Message(true, "Logged In")
 	resp["account"] = account
 	return resp
+
+}
+
+//CreateToken : Function used to generate a token that expires in 15 minutes.
+func CreateToken(accountID uint) (string, error) {
+	tk := &Token{UserID: accountID}
+	tk.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * 15).Unix()
+
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	tokenString, err := token.SignedString([]byte(os.Getenv("token_password")))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+
 }
 
 //GetUser ... Gets the user from the userID
