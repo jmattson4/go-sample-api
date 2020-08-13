@@ -9,14 +9,17 @@ import (
 
 //Environmentals used to model the environmentals of the application.
 type Environmentals struct {
-	InstanceConnectionName string
-	AccountDatabaseName    string
-	AccountUser            string
-	AccountPassword        string
-	DatabaseName           string
-	DatabaseUser           string
-	DatabasePassword       string
-	TokenPassword          string
+	AccountDBService    string
+	AccountDBPort       string
+	AccountDatabaseName string
+	AccountUser         string
+	AccountPassword     string
+	DatabaseDBService   string
+	DatabaseDBPort      string
+	DatabaseName        string
+	DatabaseUser        string
+	DatabasePassword    string
+	TokenPassword       string
 }
 
 var env *Environmentals
@@ -34,14 +37,17 @@ func init() {
 		}
 	}
 	env = &Environmentals{
-		InstanceConnectionName: os.Getenv("INSTANCE_CONNECTION_NAME"),
-		AccountDatabaseName:    os.Getenv("ACCOUNT_DATABASE_NAME"),
-		AccountUser:            os.Getenv("ACCOUNT_USER"),
-		AccountPassword:        os.Getenv("ACCOUNT_PASSWORD"),
-		DatabaseName:           os.Getenv("DATABASE_NAME"),
-		DatabaseUser:           os.Getenv("DATABASE_USER"),
-		DatabasePassword:       os.Getenv("DATABASE_PASSWORD"),
-		TokenPassword:          os.Getenv("token_password"),
+		AccountDBService:    os.Getenv("ACCOUNT_DB_SERVICE"),
+		AccountDBPort:       os.Getenv("ACCOUNT_DB_PORT"),
+		AccountDatabaseName: os.Getenv("ACCOUNT_DB"),
+		AccountUser:         os.Getenv("ACCOUNT_DEV_USER"),
+		AccountPassword:     os.Getenv("POSTGRES_DEV_PASSWORD"),
+		DatabaseDBService:   os.Getenv("NEWS_DB_SERVICE"),
+		DatabaseDBPort:      os.Getenv("NEWS_DB_PORT"),
+		DatabaseName:        os.Getenv("NEWS_DB"),
+		DatabaseUser:        os.Getenv("NEWS_DB_USER"),
+		DatabasePassword:    os.Getenv("POSTGRES_DEV_PASSWORD"),
+		TokenPassword:       os.Getenv("token_password"),
 	}
 }
 

@@ -1,0 +1,42 @@
+version: '3'
+services: 
+    udb: 
+        image: postgres
+        environment: 
+            POSTGRES_DB: ${ACCOUNT_DB}
+            POSTGRES_USER: ${ACCOUNT_DEV_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
+        ports:
+            - 5432:5432
+        networks:
+            - fullstack
+    ndb:
+        image: postgres
+        environment: 
+            POSTGRES_DB: ${NEWS_DB}
+            POSTGRES_USER: ${NEWS_DB_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
+        ports:
+            - 5433:5432
+        networks:
+            - fullstack
+    app:
+        build: .
+        command: ./wait-for-it.sh udb:5432 -- go run main.go
+        volumes:
+            - .:/go/src/app
+        ports:
+            - "8080:8010"
+        env_file: 
+            - .env
+        depends_on:
+            - udb
+            - ndb
+        links:
+            - udb
+            - ndb
+        networks:
+            - fullstack
+networks:
+    fullstack:
+        driver: bridge
