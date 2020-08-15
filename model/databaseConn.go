@@ -16,7 +16,6 @@ var userDB *gorm.DB //database
 func init() {
 	env := util.GetEnv()
 
-	time.Sleep(time.Second * 30)
 	go initNewsDB(env)
 	go initUserDb(env)
 

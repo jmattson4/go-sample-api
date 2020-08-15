@@ -20,12 +20,23 @@ type AccessDetails struct {
 //JwtAuthentication ... Handler to ensure that every
 var JwtAuthentication = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		checkEndpointList(next, w, r)
+		notAuth := []string{"/api/user/new", "/api/user/login", "/api/user/refresh"} //List of endpoints that doesn't require auth
+		requestPath := r.URL.Path                                                    //current request path
+
+		//check if request does not need authentication, serve the request if it doesn't need it
+		for _, value := range notAuth {
+
+			if value == requestPath {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
 		response := make(map[string]interface{})
-		tokenAuth, err := extractTokenMetaData(r)
+		tokenAuth, err := ExtractTokenMetaData(r)
 
 		if err != nil {
-			response = u.Message(false, "Token sent is unauthorized please login to get a new token.")
+			response = u.Message(false, fmt.Sprintf("Token sent is unauthorized please login to get a new token: %v", err))
 			u.RespondWithError(w, http.StatusUnauthorized, response)
 			return
 		}
@@ -43,20 +54,6 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
 	})
-}
-
-func checkEndpointList(next http.Handler, w http.ResponseWriter, r *http.Request) {
-	notAuth := []string{"/api/user/new", "/api/user/login"} //List of endpoints that doesn't require auth
-	requestPath := r.URL.Path                               //current request path
-
-	//check if request does not need authentication, serve the request if it doesn't need it
-	for _, value := range notAuth {
-
-		if value == requestPath {
-			next.ServeHTTP(w, r)
-			return
-		}
-	}
 }
 
 func extractToken(r *http.Request) string {
@@ -93,7 +90,10 @@ func tokenValid(r *http.Request) error {
 	}
 	return nil
 }
-func extractTokenMetaData(r *http.Request) (*AccessDetails, error) {
+
+//ExtractTokenMetaData This function is used to pull the access token meta data from a request
+//	in order to check the cache.
+func ExtractTokenMetaData(r *http.Request) (*AccessDetails, error) {
 	token, err := verifyToken(r)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func extractTokenMetaData(r *http.Request) (*AccessDetails, error) {
 		if !ok {
 			return nil, err
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["account_id"]), 10, 64)
 		if err != nil {
 			return nil, err
 		}

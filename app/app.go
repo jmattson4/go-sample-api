@@ -10,6 +10,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gorilla/mux"
 	c "github.com/jmattson4/go-sample-api/controller"
+	mw "github.com/jmattson4/go-sample-api/middleware"
 )
 
 //App models the application.
@@ -52,11 +53,13 @@ func (a *App) initializeRoutes() {
 
 	a.Router.HandleFunc("/api/user/new", c.CreateAccount).Methods("POST")
 	a.Router.HandleFunc("/api/user/login", c.Authenticate).Methods("POST")
+	a.Router.HandleFunc("/api/user/logout", c.Logout).Methods("POST")
+	a.Router.HandleFunc("/api/user/refresh", c.Refresh).Methods("POST")
 }
 
 func (a *App) initializeMiddleware() {
-	a.Router.Use(JwtAuthentication)
-	a.Router.Use(Authorize(a.Enforcer))
+	a.Router.Use(mw.JwtAuthentication)
+	a.Router.Use(mw.Authorize(a.Enforcer))
 }
 
 //Run To be used to start up the server. Use after initilization.

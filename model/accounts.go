@@ -196,6 +196,14 @@ func CreateAuth(userid uint, td *TokenDetails) error {
 	return nil
 }
 
+func DeleteAuth(givenUuid string) (int64, error) {
+	deleted, err := cache.Client.Del(givenUuid).Result()
+	if err != nil {
+		return 0, err
+	}
+	return deleted, nil
+}
+
 //GetUser ... Gets the user from the userID
 func GetUser(u uint) *Account {
 	acc := &Account{}
