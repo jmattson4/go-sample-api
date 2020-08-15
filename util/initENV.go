@@ -19,7 +19,13 @@ type Environmentals struct {
 	DatabaseName        string
 	DatabaseUser        string
 	DatabasePassword    string
-	TokenPassword       string
+	AccessSecret        string
+	RefreshSecret       string
+	RedisPassword       string
+	RedisPort           string
+	RedisHostname       string
+	JWTCacheDB          string
+	NewsCacheDB         string
 }
 
 var env *Environmentals
@@ -47,7 +53,13 @@ func init() {
 		DatabaseName:        os.Getenv("NEWS_DB"),
 		DatabaseUser:        os.Getenv("NEWS_DB_USER"),
 		DatabasePassword:    os.Getenv("POSTGRES_DEV_PASSWORD"),
-		TokenPassword:       os.Getenv("token_password"),
+		AccessSecret:        os.Getenv("access_secret"),
+		RefreshSecret:       os.Getenv("refresh_secret"),
+		RedisPassword:       os.Getenv("REDIS_PASSWORD"),
+		RedisPort:           os.Getenv("REDIS_PORT"),
+		RedisHostname:       os.Getenv("REDIS_HOSTNAME"),
+		JWTCacheDB:          os.Getenv("JWT_CACHE_DB"),
+		NewsCacheDB:         os.Getenv("NEWS_CACH_DB"),
 	}
 }
 

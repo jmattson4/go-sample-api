@@ -1,26 +1,51 @@
 version: '3'
+volumes: 
+    udata:
+    ndata:
+    rdata:
 services: 
     udb: 
+        container_name: udb
         image: postgres
         environment: 
             POSTGRES_DB: ${ACCOUNT_DB}
             POSTGRES_USER: ${ACCOUNT_DEV_USER}
             POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
         ports:
-            - 5432:5432
+            - ${ACCOUNT_DB_PORT}:5432
+        volumes:
+            - udata:/var/lib/postgresql/data
         networks:
-            - fullstack
-    ndb:
+            - security
+    db:
+        container_name: newsdb
         image: postgres
         environment: 
             POSTGRES_DB: ${NEWS_DB}
             POSTGRES_USER: ${NEWS_DB_USER}
             POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
+        command: -p 5433
+        expose: 
+            - '5433'
         ports:
-            - 5433:5432
+            - ${NEWS_DB_PORT}:5433
+        volumes:
+            - ndata:/var/lib/postgresql/data
         networks:
-            - fullstack
+            - basic
+    cache:
+        container_name: cache
+        image: redis:alpine
+        command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+        hostname: redis
+        networks:
+            - redis-net
+        volumes:
+            - rdata:/data
+        networks:
+            - basic
     app:
+        container_name: goapp
         build: .
         command: ./wait-for-it.sh udb:5432 -- go run main.go
         volumes:
@@ -31,12 +56,15 @@ services:
             - .env
         depends_on:
             - udb
-            - ndb
+            - db
         links:
             - udb
-            - ndb
+            - db
         networks:
-            - fullstack
+            - basic
+            - security
 networks:
-    fullstack:
+    basic:
+        driver: bridge
+    security:
         driver: bridge
