@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-redis/redis/v7"
 	"github.com/jmattson4/go-sample-api/cache"
+	"github.com/jmattson4/go-sample-api/domain"
 )
 
 type NewsCacheRepo struct {
@@ -26,7 +27,7 @@ func generateExpirationTime() time.Duration {
 }
 
 //Create Params: news *model.NewsData; Returns: error; Description: Creates Scraped News Data piece
-func (repo *NewsCacheRepo) Create(news *NewsData) error {
+func (repo *NewsCacheRepo) Create(news *domain.NewsData) error {
 	encode, encodeErr := json.Marshal(news)
 	if encodeErr != nil {
 		return encodeErr
@@ -40,7 +41,7 @@ func (repo *NewsCacheRepo) Create(news *NewsData) error {
 }
 
 //Update Params: news *model.NewsData; Returns: error; Description: Updates News Data piece
-func (repo *NewsCacheRepo) Update(news *NewsData) error {
+func (repo *NewsCacheRepo) Update(news *domain.NewsData) error {
 	encode, encodeErr := json.Marshal(news)
 	if encodeErr != nil {
 		return encodeErr
@@ -52,7 +53,7 @@ func (repo *NewsCacheRepo) Update(news *NewsData) error {
 	}
 	return nil
 }
-func (repo *NewsCacheRepo) Delete(news *NewsData) error {
+func (repo *NewsCacheRepo) Delete(news *domain.NewsData) error {
 	_, err := cache.Client.Del(fmt.Sprintf("id:%v", news.ID)).Result()
 	if err != nil {
 		return err
@@ -60,7 +61,7 @@ func (repo *NewsCacheRepo) Delete(news *NewsData) error {
 	return nil
 }
 
-func (repo *NewsCacheRepo) HardDelete(news *NewsData) error {
+func (repo *NewsCacheRepo) HardDelete(news *domain.NewsData) error {
 	_, err := cache.Client.Del(fmt.Sprintf("id:%v", news.ID)).Result()
 	if err != nil {
 		return err
@@ -69,7 +70,7 @@ func (repo *NewsCacheRepo) HardDelete(news *NewsData) error {
 }
 
 //Get Params: news *model.NewsData; Returns: error; Description: Gets News Data piece
-func (repo *NewsCacheRepo) Get(news *NewsData) error {
+func (repo *NewsCacheRepo) Get(news *domain.NewsData) error {
 	value, err := repo.Redis.Get(fmt.Sprintf("id:%v", news.ID)).Result()
 	if err != nil {
 		return err
@@ -81,11 +82,11 @@ func (repo *NewsCacheRepo) Get(news *NewsData) error {
 	return err
 }
 
-func (repo *NewsCacheRepo) GetMultipleNews(start int, count int, news []*NewsData) error {
+func (repo *NewsCacheRepo) GetMultipleNews(start int, count int, news []*domain.NewsData) error {
 	st := start
 	var err error
 	for i := 0; i < count; i++ {
-		newsData := NewsDataBasicInit()
+		newsData := domain.NewsDataBasicInit()
 		newsData.ID = uint(st)
 		if err = repo.Get(newsData); err != nil {
 			return err

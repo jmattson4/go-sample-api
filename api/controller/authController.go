@@ -7,41 +7,46 @@ import (
 	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
-	mw "github.com/jmattson4/go-sample-api/middleware"
-	"github.com/jmattson4/go-sample-api/model"
-	u "github.com/jmattson4/go-sample-api/util"
+	acc "github.com/jmattson4/go-sample-api/account/service"
+	mw "github.com/jmattson4/go-sample-api/api/middleware"
+	u "github.com/jmattson4/go-sample-api/api/utils"
 )
 
-//CreateAccount ...
-var CreateAccount = func(w http.ResponseWriter, r *http.Request) {
+type AuthController struct {
+	accServ acc.AccountService
+}
 
-	account := &model.Account{}
-	err := json.NewDecoder(r.Body).Decode(account) //decode the request body into struct and failed if any error occur
+//CreateAccount ...
+func (auth *AuthController) CreateAccount(w http.ResponseWriter, r *http.Request) {
+
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	err := auth.accServ.Create(email, password) //Create account
 	if err != nil {
-		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Invalid request"))
+		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
 		return
 	}
-	defer r.Body.Close()
-	resp := account.Create() //Create account
-	u.RespondWithJSON(w, http.StatusOK, resp)
+	u.RespondWithJSON(w, http.StatusOK, u.Message(false, domain.ACCOUNT_CREATION_SUCCESS)
 }
 
 //Authenticate ...
-var Authenticate = func(w http.ResponseWriter, r *http.Request) {
+func Authenticate(w http.ResponseWriter, r *http.Request) {
 
-	account := &model.Account{}
-	err := json.NewDecoder(r.Body).Decode(account) //decode the request body into struct and failed if any error occur
-	if err != nil {
-		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Invalid request"))
-		return
-	}
+	email := r.FormValue("email")
+	password := r.FormValue("password")
 
 	resp := model.Login(account.Email, account.Password)
-	u.RespondWithJSON(w, http.StatusOK, resp)
+	acc, err := auth.accServ.Login(email, password)
+	if err != nil {
+		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
+		return
+	}
+	u.RespondWithJSON(w, http.StatusOK, acc)
 }
 
 //Logout used to logout. Deleted the stored access token in the redis cache
-var Logout = func(w http.ResponseWriter, r *http.Request) {
+func Logout(w http.ResponseWriter, r *http.Request) {
 	au, err := mw.ExtractTokenMetaData(r)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Unauthorized"))
@@ -56,7 +61,7 @@ var Logout = func(w http.ResponseWriter, r *http.Request) {
 }
 
 //Refresh used to refresh the current refresh token gives back a new refresh and access
-var Refresh = func(w http.ResponseWriter, r *http.Request) {
+func Refresh(w http.ResponseWriter, r *http.Request) {
 	mapToken := map[string]string{}
 	if err := json.NewDecoder(r.Body).Decode(&mapToken); err != nil {
 		u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, "Invalid Map token"))

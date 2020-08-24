@@ -5,17 +5,22 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jmattson4/go-sample-api/cache"
+	"github.com/go-redis/redis"
+	"github.com/jmattson4/go-sample-api/domain"
 	u "github.com/jmattson4/go-sample-api/util"
 	"github.com/twinj/uuid"
 )
 
+type CacheRepository struct {
+	redis *redis.Client
+}
+
 //CreateToken : Function used to generate a access token that expires in 15 minutes and a Refresh Token that expries in 7 days
-func CreateToken(accountID uint) (*TokenDetails, error) {
+func (cr *CacheRepository) CreateToken(accountID uint) (*domain.TokenDetails, error) {
 	accessSecret := u.GetEnv().AccessSecret
 	refreshSecret := u.GetEnv().RefreshSecret
 	//Create token details setting
-	td := &TokenDetails{}
+	td := &domain.TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
 	td.AccessUuid = uuid.NewV4().String()
 
@@ -49,24 +54,24 @@ func CreateToken(accountID uint) (*TokenDetails, error) {
 
 }
 
-func CreateAuth(userid uint, td *TokenDetails) error {
+func (cr *CacheRepository) CreateAuth(userid uint, td *domain.TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := cache.Client.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := cr.redis.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := cache.Client.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := cr.redis.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
 	return nil
 }
 
-func DeleteAuth(givenUuid string) (int64, error) {
-	deleted, err := cache.Client.Del(givenUuid).Result()
+func (cr *CacheRepository) DeleteAuth(givenUuid string) (int64, error) {
+	deleted, err := cr.redis.Del(givenUuid).Result()
 	if err != nil {
 		return 0, err
 	}
