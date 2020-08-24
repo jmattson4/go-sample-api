@@ -4,12 +4,21 @@ import (
 	"strings"
 
 	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/twinj/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AccountService struct {
 	dbRepo    domain.AccountDBRepo
 	cacheRepo domain.AccountCacheRepo
+}
+
+func (as *AccountService) GetAccount(uuid uuid.UUID) (*domain.Account, error) {
+	err := as.dbRepo.
+}
+
+func (as *AccountService) GetAccountByEmail(email string) (*domain.Account, error) {
+	err := as.dbRepo.
 }
 
 func (as *AccountService) Create(email, password string) error {
@@ -47,7 +56,7 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 		return nil, domain.ACCOUNT_TOKEN_CREATION_ERROR
 	}
 	saveErr := as.cacheRepo.CreateAuth(account.ID, ts)
-	//TODO change to vague error message when in prod
+
 	if saveErr != nil {
 		return nil, domain.ACCOUNT_CACHE_AUTH_CREATION
 	}
@@ -56,6 +65,10 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 	account.RefreshToken = ts.RefreshToken
 
 	return account, nil
+
+}
+
+func (as *AccountService) Logout(uuid string) error {
 
 }
 

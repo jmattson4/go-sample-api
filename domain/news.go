@@ -8,7 +8,7 @@ import (
 //NewsData .... Models Collected data from various scraped Canadian News Sites
 type NewsData struct {
 	gorm.Model
-	ID            uuid.UUID `json:"id" gorm:"type:uuid;primary_key;"`
+	ID            uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	ArticleLink   string    `json:"articleLink" gorm:"not null"`
 	ArticleText   string    `json:"articleText"`
 	ImageURL      string    `json:"imageURL"`

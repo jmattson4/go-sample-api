@@ -31,12 +31,11 @@ func (auth *AuthController) CreateAccount(w http.ResponseWriter, r *http.Request
 }
 
 //Authenticate ...
-func Authenticate(w http.ResponseWriter, r *http.Request) {
+func (auth *AuthController) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	resp := model.Login(account.Email, account.Password)
 	acc, err := auth.accServ.Login(email, password)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))

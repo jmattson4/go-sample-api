@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/twinj/uuid"
 )
 
 //TokenDetails models the Tokens used for authentication and Authorization
@@ -17,18 +18,28 @@ type TokenDetails struct {
 //Account a struct to rep user account
 type Account struct {
 	gorm.Model
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Role         string `json:"role"`
-	AccessToken  string `json:"accessToken" sql:"-"`
-	RefreshToken string `json:"refreshToken" sql:"-"`
+	ID           uuid.UUID `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Email        string    `json:"email"`
+	Password     string    `json:"password"`
+	Role         string    `json:"role"`
+	AccessToken  string    `json:"accessToken" sql:"-"`
+	RefreshToken string    `json:"refreshToken" sql:"-"`
 }
 
 func AccountBasicConstructor() *Account {
 	return &Account{}
 }
-func AccountConstructor(email string, password string, role string) *Account {
+
+func AccountConstructorWithID() *Account {
+	uuid := uuid.NewV4()
 	return &Account{
+		ID: uuid,
+	}
+}
+func AccountConstructor(email string, password string, role string) *Account {
+	uuid := uuid.NewV4()
+	return &Account{
+		ID:       uuid,
 		Email:    email,
 		Password: password,
 		Role:     role,
@@ -36,23 +47,24 @@ func AccountConstructor(email string, password string, role string) *Account {
 }
 
 type AccountDBRepo interface {
-	GetAccount(u uint) *Account
+	GetAccount(u uuid.UUID) (*Account, error)
 	Create(email string, password string) error
 	Construct(interface{}) interface{}
-	GetAccountByEmail(email string) *Account
+	GetAccountByEmail(email string) (*Account, error)
 }
 
 type AccountCacheRepo interface {
-	GetAccount(u uint) *Account
-	Create(email string, password string) error
-	Construct(interface{}) interface{}
-	CreateToken(accountID uint) (*TokenDetails, error)
-	CreateAuth(userid uint, td *TokenDetails) error
+	GetAccount(uuid uuid.UUID) *Account
+	CreateToken(accountID uuid.UUID) (*TokenDetails, error)
+	CreateAuth(userid uuid.UUID, td *TokenDetails) error
 	DeleteAuth(givenUuid string) (int64, error)
 }
 
 type AccountService interface {
+	GetAccount(uuid uuid.UUID) (*Account, error)
+	GetAccountByEmail(email string) (*Account, error)
 	Login(email, password string) (*Account, error)
+	Logout(uuid string) error
 	Validate(email, password string) error
 	Create(email, password string) error
 }

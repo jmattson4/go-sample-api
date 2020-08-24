@@ -3,6 +3,7 @@ package pql
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/twinj/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,15 +16,6 @@ func ConstructAccountsRepo(db *gorm.DB) *AccountsRepo {
 		db: db,
 	}
 }
-func (repo *AccountsRepo) GetAccountByEmail(email string) *domain.Account {
-	acc := domain.AccountBasicConstructor()
-	repo.db.Table("accounts").Where("email = ?", email).First(acc)
-	if acc.Email == "" { //User not found!
-		return nil
-	}
-	acc.Password = ""
-	return acc
-}
 
 //Create ...
 func (repo *AccountsRepo) Create(email string, password string) error {
@@ -35,9 +27,9 @@ func (repo *AccountsRepo) Create(email string, password string) error {
 	err := repo.db.Create(account).Error
 
 	if err != nil {
-		return err
+		return domain.ACCOUNT_CREATION_FAILURE
 	}
-	if account.ID <= 0 {
+	if uuid.IsNil(account.ID) {
 		return domain.ACCOUNT_ID_INVALID
 	}
 
@@ -55,12 +47,23 @@ func (repo *AccountsRepo) CheckIfTablesExist() {
 }
 
 //GetAccount ... Gets the Account from the AccountID
-func (repo *AccountsRepo) GetAccount(u uint) *domain.Account {
+func (repo *AccountsRepo) GetAccount(u uuid.UUID) (*domain.Account, error) {
 	acc := domain.AccountBasicConstructor()
-	repo.db.Table("accounts").Where("id = ?", u).First(acc)
-	if acc.Email == "" { //User not found!
-		return nil
+	err := repo.db.Table("accounts").Where("id = ?", u).First(acc).Error
+	if err != nil || acc.Email == "" { //User not found!
+		return nil, domain.ACCOUNT_ID_CANT_FIND
 	}
 	acc.Password = ""
-	return acc
+	return acc, nil
+}
+
+//GetAccountByEmail Returns the account associated with the given email address.
+func (repo *AccountsRepo) GetAccountByEmail(email string) (*domain.Account, error) {
+	acc := domain.AccountBasicConstructor()
+	err := repo.db.Table("accounts").Where("email = ?", email).First(acc).Error
+	if err != nil || acc.Email == "" { //User not found!
+		return nil, domain.ACCOUNT_EMAIL_CANT_FIND
+	}
+	acc.Password = ""
+	return acc, nil
 }

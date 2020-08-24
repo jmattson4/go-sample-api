@@ -71,7 +71,7 @@ func (hand *NewsHandler) GetNewsArticleByID(w http.ResponseWriter, r *http.Reque
 	newsArticle.WebsiteName = webName
 	newsArticle.ID = *uuidParse
 	if getErr := hand.NewsServ.GetNewsByWebNameAndID(newsArticle); getErr != nil {
-		response := util.Message(false, "Could mot find Article for given Webname and ID")
+		response := util.Message(false, "Could not find Article for given Webname and ID")
 		util.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
