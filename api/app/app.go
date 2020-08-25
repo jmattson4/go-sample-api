@@ -9,8 +9,8 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/gorilla/mux"
-	c "github.com/jmattson4/go-sample-api/controller"
-	mw "github.com/jmattson4/go-sample-api/middleware"
+	c "github.com/jmattson4/go-sample-api/api/controller"
+	mw "github.com/jmattson4/go-sample-api/api/middleware"
 )
 
 //App models the application.
@@ -42,14 +42,7 @@ func (a *App) InitializeTesting() {
 func (a *App) initializeRoutes() {
 
 	a.Router.HandleFunc("/api/news/{newsname}", c.GetNewsByWebName).Methods("GET")
-	a.Router.HandleFunc("/api/news/{newsname}/{id:[0-9]+}", c.GetNewsArticleByID).Methods("GET")
-
-	a.Router.HandleFunc("/api/products", c.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/api/product", c.CreateProduct).Methods("POST")
-	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.GetProduct).Methods("GET")
-	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.UpdateProduct).Methods("PUT")
-	a.Router.HandleFunc("/api/product/{id:[0-9]+}", c.DeleteProduct).Methods("DELETE")
-	a.Router.HandleFunc("/api/products/deleted", c.ShowDeletedProducts).Methods("GET")
+	a.Router.HandleFunc("/api/news/{newsname}/{id}", c.GetNewsArticleByID).Methods("GET")
 
 	a.Router.HandleFunc("/api/user/new", c.CreateAccount).Methods("POST")
 	a.Router.HandleFunc("/api/user/login", c.Authenticate).Methods("POST")

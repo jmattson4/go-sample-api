@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	u "github.com/jmattson4/go-sample-api/api/utils"
 	"github.com/jmattson4/go-sample-api/cache"
-	u "github.com/jmattson4/go-sample-api/util"
+	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/jmattson4/go-sample-api/util"
 )
 
 type AccessDetails struct {
 	AccessUuid string
-	UserID     uint
+	UserID     string
 }
 
 //JwtAuthentication ... Handler to ensure that every
@@ -49,7 +50,7 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 		}
 
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
-		fmt.Sprintf("User %", userID) //Useful for monitoring
+		//fmt.Sprintf("User %v", userID) //Useful for monitoring
 		ctx := context.WithValue(r.Context(), "user", userID)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
@@ -72,7 +73,7 @@ func verifyToken(r *http.Request) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(u.GetEnv().AccessSecret), nil
+		return []byte(util.GetEnv().AccessSecret), nil
 	})
 	if err != nil {
 		return nil, err
@@ -102,25 +103,25 @@ func ExtractTokenMetaData(r *http.Request) (*AccessDetails, error) {
 	if ok && token.Valid {
 		accessUuid, ok := claims["access_uuid"].(string)
 		if !ok {
-			return nil, err
+			return nil, domain.JWT_CANNOT_FIND_PROPERTY_ACCESS
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["account_id"]), 10, 64)
-		if err != nil {
-			return nil, err
+		userId, ok2 := claims["account_id"].(string)
+		if !ok2 {
+			return nil, domain.JWT_CANNOT_FIND_PROPERTY_ACCOUNT
 		}
+
 		return &AccessDetails{
 			AccessUuid: accessUuid,
-			UserID:     uint(userId),
+			UserID:     userId,
 		}, nil
 	}
 	return nil, err
 }
 
-func fetchAuth(auuthD *AccessDetails) (uint, error) {
+func fetchAuth(auuthD *AccessDetails) (string, error) {
 	userid, err := cache.Client.Get(auuthD.AccessUuid).Result()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	userID, _ := strconv.ParseUint(userid, 10, 64)
-	return uint(userID), nil
+	return userid, nil
 }

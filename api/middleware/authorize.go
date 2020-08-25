@@ -3,11 +3,11 @@ package app
 import (
 	"net/http"
 
-	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/twinj/uuid"
 
 	"github.com/casbin/casbin/v2"
-	u "github.com/jmattson4/go-sample-api/util"
 	acc "github.com/jmattson4/go-sample-api/account/service"
+	u "github.com/jmattson4/go-sample-api/api/utils"
 )
 
 //Authorize ...
@@ -16,9 +16,15 @@ func Authorize(e *casbin.Enforcer, service *acc.AccountService) func(next http.H
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			user := r.Context().Value("user")
 			if user != nil {
-				userID := user.(uint)
-				userAcc := model.GetUser(userID)
-				service.
+				userID := user.(string)
+				userUUID, err := uuid.Parse(userID)
+				if err != nil {
+					return
+				}
+				userAcc, getErr := service.GetAccount(userUUID)
+				if getErr != nil {
+					return
+				}
 				userRole := userAcc.Role
 
 				// casbin rule enforcing

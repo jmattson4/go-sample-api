@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,7 +15,7 @@ type CacheRepository struct {
 }
 
 //CreateToken : Function used to generate a access token that expires in 15 minutes and a Refresh Token that expries in 7 days
-func (cr *CacheRepository) CreateToken(accountID uint) (*domain.TokenDetails, error) {
+func (cr *CacheRepository) CreateToken(accountID uuid.UUID) (*domain.TokenDetails, error) {
 	accessSecret := u.GetEnv().AccessSecret
 	refreshSecret := u.GetEnv().RefreshSecret
 	//Create token details setting
@@ -54,16 +53,16 @@ func (cr *CacheRepository) CreateToken(accountID uint) (*domain.TokenDetails, er
 
 }
 
-func (cr *CacheRepository) CreateAuth(userid uint, td *domain.TokenDetails) error {
+func (cr *CacheRepository) CreateAuth(accountID uuid.UUID, td *domain.TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := cr.redis.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := cr.redis.Set(td.AccessUuid, accountID.String(), at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := cr.redis.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := cr.redis.Set(td.RefreshUuid, accountID.String(), rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}

@@ -47,7 +47,7 @@ func (repo *AccountsRepo) CheckIfTablesExist() {
 }
 
 //GetAccount ... Gets the Account from the AccountID
-func (repo *AccountsRepo) GetAccount(u uuid.UUID) (*domain.Account, error) {
+func (repo *AccountsRepo) GetAccount(u *uuid.UUID) (*domain.Account, error) {
 	acc := domain.AccountBasicConstructor()
 	err := repo.db.Table("accounts").Where("id = ?", u).First(acc).Error
 	if err != nil || acc.Email == "" { //User not found!

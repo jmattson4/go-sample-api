@@ -47,21 +47,21 @@ func AccountConstructor(email string, password string, role string) *Account {
 }
 
 type AccountDBRepo interface {
-	GetAccount(u uuid.UUID) (*Account, error)
+	GetAccount(uuid *uuid.UUID) (*Account, error)
 	Create(email string, password string) error
 	Construct(interface{}) interface{}
 	GetAccountByEmail(email string) (*Account, error)
 }
 
 type AccountCacheRepo interface {
-	GetAccount(uuid uuid.UUID) *Account
+	GetAccount(uuid *uuid.UUID) *Account
 	CreateToken(accountID uuid.UUID) (*TokenDetails, error)
 	CreateAuth(userid uuid.UUID, td *TokenDetails) error
 	DeleteAuth(givenUuid string) (int64, error)
 }
 
 type AccountService interface {
-	GetAccount(uuid uuid.UUID) (*Account, error)
+	GetAccount(uuid *uuid.UUID) (*Account, error)
 	GetAccountByEmail(email string) (*Account, error)
 	Login(email, password string) (*Account, error)
 	Logout(uuid string) error

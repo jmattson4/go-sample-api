@@ -13,16 +13,30 @@ type AccountService struct {
 	cacheRepo domain.AccountCacheRepo
 }
 
-func (as *AccountService) GetAccount(uuid uuid.UUID) (*domain.Account, error) {
-	err := as.dbRepo.
+func (as *AccountService) GetAccount(uuid *uuid.UUID) (*domain.Account, error) {
+	acc, err := as.dbRepo.GetAccount(uuid)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
 }
 
 func (as *AccountService) GetAccountByEmail(email string) (*domain.Account, error) {
-	err := as.dbRepo.
+	if len(email) < 0 {
+		return nil, domain.ACCOUNT_EMAIL_EMPTY
+	}
+	if !strings.Contains(email, "@") {
+		return nil, domain.ACCOUNT_EMAIL_INVALID
+	}
+	acc, err := as.dbRepo.GetAccountByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
 }
 
 func (as *AccountService) Create(email, password string) error {
-	valErr := as.Validate(email, password)
+	valErr := as.validate(email, password)
 	if valErr != nil {
 		return valErr
 	}
@@ -36,15 +50,13 @@ func (as *AccountService) Create(email, password string) error {
 //Login ... allows the user to login
 func (as *AccountService) Login(email, password string) (*domain.Account, error) {
 
-	account := &domain.Account{}
-	account = as.dbRepo.GetAccountByEmail(email)
-	if account == nil {
-		return nil, domain.ACCOUNT_EMAIL_CANT_FIND
+	account, err := as.GetAccountByEmail(email)
+	if err != nil {
+		return nil, err
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
-	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
-
+	hashErr := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
+	if hashErr != nil && hashErr == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
 		return nil, domain.ACCOUNT_PASSWORD_NO_MATCH
 	}
 	//Worked! Logged In
@@ -68,12 +80,16 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 
 }
 
-func (as *AccountService) Logout(uuid string) error {
-
+func (as *AccountService) Logout(accessUuid string) error {
+	_, err := as.cacheRepo.DeleteAuth(accessUuid)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //Validate incoming user details...
-func (as *AccountService) Validate(email, password string) error {
+func (as *AccountService) validate(email, password string) error {
 	if !strings.Contains(email, "@") {
 		return domain.ACCOUNT_EMAIL_INVALID
 	}
@@ -82,13 +98,10 @@ func (as *AccountService) Validate(email, password string) error {
 		return domain.ACCOUNT_PASSWORD_TOO_SHORT
 	}
 
-	//Email must be unique
-	temp := &domain.Account{}
-
 	//check for errors and duplicate emails
-	temp = as.dbRepo.GetAccountByEmail(email)
-	if temp == nil {
-		return domain.ACCOUNT_EMAIL_CANT_FIND
+	temp, err := as.GetAccountByEmail(email)
+	if err != nil {
+		return err
 	}
 	if temp.Email != "" {
 		return domain.ACCOUNT_EMAIL_IN_USE

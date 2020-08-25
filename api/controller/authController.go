@@ -45,14 +45,14 @@ func (auth *AuthController) Authenticate(w http.ResponseWriter, r *http.Request)
 }
 
 //Logout used to logout. Deleted the stored access token in the redis cache
-func Logout(w http.ResponseWriter, r *http.Request) {
+func (auth *AuthController)  Logout(w http.ResponseWriter, r *http.Request) {
 	au, err := mw.ExtractTokenMetaData(r)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Unauthorized"))
 		return
 	}
-	deleted, delErr := model.DeleteAuth(au.AccessUuid)
-	if delErr != nil || deleted == 0 {
+	delErr := auth.accServ.Logout(au.AccessUuid)
+	if delErr != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Cannot Deleted: Unauthorized"))
 		return
 	}
