@@ -3,76 +3,49 @@ package accounts
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis"
 	"github.com/jmattson4/go-sample-api/domain"
-	u "github.com/jmattson4/go-sample-api/util"
-	"github.com/twinj/uuid"
 )
 
-type CacheRepository struct {
-	redis *redis.Client
+type AccountCacheRepository struct {
+	Redis *redis.Client
 }
 
-//CreateToken : Function used to generate a access token that expires in 15 minutes and a Refresh Token that expries in 7 days
-func (cr *CacheRepository) CreateToken(accountID uuid.UUID) (*domain.TokenDetails, error) {
-	accessSecret := u.GetEnv().AccessSecret
-	refreshSecret := u.GetEnv().RefreshSecret
-	//Create token details setting
-	td := &domain.TokenDetails{}
-	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
-	td.AccessUuid = uuid.NewV4().String()
-
-	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
-	td.RefreshUuid = uuid.NewV4().String()
-
-	var err error
-
-	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["access_uuid"] = td.AccessUuid
-	atClaims["account_id"] = accountID
-	atClaims["exp"] = td.AtExpires
-	at := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), atClaims)
-	td.AccessToken, err = at.SignedString([]byte(accessSecret))
-	if err != nil {
-		return nil, err
+func ConstructAccountCacheRepo(redis *redis.Client) *AccountCacheRepository {
+	return &AccountCacheRepository{
+		Redis: redis,
 	}
-
-	rtClaims := jwt.MapClaims{}
-	rtClaims["refresh_uuid"] = td.RefreshUuid
-	rtClaims["account_id"] = accountID
-	rtClaims["exp"] = td.RtExpires
-	rt := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(refreshSecret))
-	if err != nil {
-		return nil, err
-	}
-
-	return td, nil
-
 }
 
-func (cr *CacheRepository) CreateAuth(accountID uuid.UUID, td *domain.TokenDetails) error {
+//GetAuth This returns the userUUID associated with the given accessUUID
+func (cr *AccountCacheRepository) GetAuth(accessUUID string) (string, error) {
+	userUUID, err := cr.Redis.Get(accessUUID).Result()
+	if err != nil {
+		return "", err
+	}
+	return userUUID, nil
+}
+
+func (cr *AccountCacheRepository) CreateAuth(accountUUID string, td *domain.TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := cr.redis.Set(td.AccessUuid, accountID.String(), at.Sub(now)).Err()
+	errAccess := cr.Redis.Set(td.AccessUuid, accountUUID, at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := cr.redis.Set(td.RefreshUuid, accountID.String(), rt.Sub(now)).Err()
+	errRefresh := cr.Redis.Set(td.RefreshUuid, accountUUID, rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
 	return nil
 }
 
-func (cr *CacheRepository) DeleteAuth(givenUuid string) (int64, error) {
-	deleted, err := cr.redis.Del(givenUuid).Result()
+func (cr *AccountCacheRepository) DeleteAuth(givenUuid string) (int64, error) {
+	deleted, err := cr.Redis.Del(givenUuid).Result()
 	if err != nil {
-		return 0, err
+		return 0, domain.ACCOUNT_CACHE_AUTH_DELETION
 	}
 	return deleted, nil
 }

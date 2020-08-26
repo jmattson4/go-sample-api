@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	a "github.com/jmattson4/go-sample-api/app"
+	a "github.com/jmattson4/go-sample-api/api/app"
 )
 
 var app a.App

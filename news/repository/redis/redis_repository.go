@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v7"
-	"github.com/jmattson4/go-sample-api/cache"
 	"github.com/jmattson4/go-sample-api/domain"
 )
 
@@ -54,7 +53,7 @@ func (repo *NewsCacheRepo) Update(news *domain.NewsData) error {
 	return nil
 }
 func (repo *NewsCacheRepo) Delete(news *domain.NewsData) error {
-	_, err := cache.Client.Del(fmt.Sprintf("id:%v", news.ID)).Result()
+	_, err := repo.Redis.Del(fmt.Sprintf("id:%v", news.ID)).Result()
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func (repo *NewsCacheRepo) Delete(news *domain.NewsData) error {
 }
 
 func (repo *NewsCacheRepo) HardDelete(news *domain.NewsData) error {
-	_, err := cache.Client.Del(fmt.Sprintf("id:%v", news.ID)).Result()
+	_, err := repo.Redis.Del(fmt.Sprintf("id:%v", news.ID)).Result()
 	if err != nil {
 		return err
 	}

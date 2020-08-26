@@ -12,7 +12,13 @@ import (
 )
 
 type NewsController struct {
-	NewsServ news.NewsServ
+	newsServ *news.NewsServ
+}
+
+func ConstructNewsController(newserv *news.NewsServ) *NewsController {
+	return &NewsController{
+		newsServ: newserv,
+	}
 }
 
 //GetNewsByWebName ...
@@ -33,8 +39,8 @@ func (cntrl *NewsController) GetNewsByWebName(w http.ResponseWriter, r *http.Req
 		u.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
-	news := &[]domain.NewsData{}
-	getErr := cntrl.NewsServ.GetMultipleNewsByWebName(start, count, news, webName)
+	news := []*domain.NewsData{}
+	getErr := cntrl.newsServ.GetMultipleNewsByWebName(start, count, news, webName)
 	if getErr != nil {
 		response := u.Message(false, "Error Getting News Articles: please try again.")
 		u.RespondWithError(w, http.StatusInternalServerError, response)
@@ -52,14 +58,14 @@ func (cntrl *NewsController) GetNewsArticleByID(w http.ResponseWriter, r *http.R
 	id := vars["id"]
 	uuidParse, uuidErr := uuid.Parse(id)
 	if uuidErr != nil {
-		response := u.Message(false, "Could mot find Article for given Webname and ID")
+		response := u.Message(false, "Could not find Article for given Webname and ID")
 		u.RespondWithError(w, http.StatusBadRequest, response)
 		return
 	}
 	newsArticle := domain.NewsDataNoInit()
 	newsArticle.WebsiteName = webName
 	newsArticle.ID = *uuidParse
-	if getErr := cntrl.NewsServ.GetNewsByWebNameAndID(newsArticle); getErr != nil {
+	if getErr := cntrl.newsServ.GetNewsByWebNameAndID(newsArticle); getErr != nil {
 		response := u.Message(false, "Could not find Article for given Webname and ID")
 		u.RespondWithError(w, http.StatusBadRequest, response)
 		return

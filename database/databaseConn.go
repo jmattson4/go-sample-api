@@ -4,25 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jmattson4/go-sample-api/model"
+	"github.com/jmattson4/go-sample-api/domain"
 	"github.com/jmattson4/go-sample-api/util"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 )
 
-var db *gorm.DB
-var userDB *gorm.DB //database
-
-func init() {
-	env := util.GetEnv()
-
-	go initNewsDB(env)
-	go initUserDb(env)
-
-}
-
-func initNewsDB(env *util.Environmentals) {
+//InitNewsDb Used to initiliaze a connection to the news db used for user accounts
+func InitNewsDB(env *util.Environmentals) *gorm.DB {
 	username := env.DatabaseUser
 	password := env.DatabasePassword
 	dbName := env.DatabaseName
@@ -34,20 +24,20 @@ func initNewsDB(env *util.Environmentals) {
 	for i := 0; i < 10; i++ {
 		conn, err := gorm.Open("postgres", dbURI)
 		if err != nil {
-			fmt.Printf("Attempt %s : Unable to open DB: %s ... Retrying \n", i, err)
-			time.Sleep(time.Second * 5)
+			fmt.Printf("Attempt %s : Unable to open DB: %s ... Retrying \n", fmt.Sprint(i), err)
 		} else {
 			conn.DB().SetConnMaxLifetime(20 * time.Second)
-			conn.DB().SetConnMaxIdleConn(30)
-			db = conn
+			conn.DB().SetMaxIdleConns(30)
 			fmt.Println("Connection to News database wassuccesful.")
-			db.Debug().AutoMigrate(&model.Product{}, &model.NewsData{}) //Database migration
-			break
+			conn.Debug().AutoMigrate(&domain.NewsData{}) //Database migration
+			return conn
 		}
 	}
+	return nil
 }
 
-func initUserDb(env *util.Environmentals) {
+//InitUserDb Used to initilaze a connection to the user db used for user accounts
+func InitAccountDB(env *util.Environmentals) *gorm.DB {
 	accountHost := env.AccountDBService
 	accountPort := env.AccountDBPort
 	accountUsername := env.AccountUser
@@ -59,25 +49,14 @@ func initUserDb(env *util.Environmentals) {
 	for i := 0; i < 10; i++ {
 		userConn, userErr := gorm.Open("postgres", dbURI2)
 		if userErr != nil {
-			fmt.Printf("Attempt #%s: Unable to open User DB: %s ... Retrying \n", i, userErr)
-			time.Sleep(time.Second * 5)
+			fmt.Printf("Attempt #%s: Unable to open User DB: %s ... Retrying \n", fmt.Sprint(i), userErr)
 		} else {
 			userConn.DB().SetConnMaxLifetime(20 * time.Second)
-			userConn.DB().SetConnMaxIdleConn(30)
-			userDB = userConn
+			userConn.DB().SetMaxIdleConns(30)
 			fmt.Println("Connection to Users database was succesful.")
-			userDB.Debug().AutoMigrate(&model.Account{})
-			break
+			userConn.Debug().AutoMigrate(&domain.Account{})
+			return userConn
 		}
 	}
-}
-
-//GetDB returns a handle to the DB object
-func GetDB() *gorm.DB {
-	return db
-}
-
-//GetUserDB returns handle to the UserDB object
-func GetUserDB() *gorm.DB {
-	return userDB
+	return nil
 }

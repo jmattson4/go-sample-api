@@ -17,6 +17,7 @@ var (
 	ACCOUNT_CREATION_FAILURE     error  = errors.New("Account creation has failed. Please try again.")
 	ACCOUNT_TOKEN_CREATION_ERROR error  = errors.New("Error while creating token.")
 	ACCOUNT_CACHE_AUTH_CREATION  error  = errors.New("Cannot create Auth in cache.")
+	ACCOUNT_CACHE_AUTH_DELETION  error  = errors.New("Cannot delete Auth. Given id may not be valid.")
 
 	NEWS_STANDARD_TESTING_ERROR error = errors.New("Testing Error")
 	NEWS_CACHE_CREATION_ERROR   error = errors.New("Failed to save to cache.")

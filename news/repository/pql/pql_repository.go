@@ -9,7 +9,7 @@ type NewsRepo struct {
 	db *gorm.DB
 }
 
-func ConstructRepo(db *gorm.DB) *NewsRepo {
+func ConstructNewsRepo(db *gorm.DB) *NewsRepo {
 	return &NewsRepo{
 		db: db,
 	}

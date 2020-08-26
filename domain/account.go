@@ -54,9 +54,8 @@ type AccountDBRepo interface {
 }
 
 type AccountCacheRepo interface {
-	GetAccount(uuid *uuid.UUID) *Account
-	CreateToken(accountID uuid.UUID) (*TokenDetails, error)
-	CreateAuth(userid uuid.UUID, td *TokenDetails) error
+	GetAuth(accessUUID string) (string, error)
+	CreateAuth(accountUUID string, td *TokenDetails) error
 	DeleteAuth(givenUuid string) (int64, error)
 }
 
@@ -67,4 +66,8 @@ type AccountService interface {
 	Logout(uuid string) error
 	Validate(email, password string) error
 	Create(email, password string) error
+	GetAuth(accessUUID string) (string, error)
+	CreateAuth(accountUUID string, td *TokenDetails) error
+	DeleteAuth(givenUUID string) error
+	CreateToken(accountUUID string) (*TokenDetails, error)
 }

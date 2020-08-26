@@ -4,16 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
 	acc "github.com/jmattson4/go-sample-api/account/service"
-	mw "github.com/jmattson4/go-sample-api/api/middleware"
 	u "github.com/jmattson4/go-sample-api/api/utils"
+	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/jmattson4/go-sample-api/util"
 )
 
 type AuthController struct {
-	accServ acc.AccountService
+	accServ *acc.AccountService
+}
+
+func ConstructAuthController(acc *acc.AccountService) *AuthController {
+	return &AuthController{
+		accServ: acc,
+	}
 }
 
 //CreateAccount ...
@@ -27,7 +33,7 @@ func (auth *AuthController) CreateAccount(w http.ResponseWriter, r *http.Request
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
 		return
 	}
-	u.RespondWithJSON(w, http.StatusOK, u.Message(false, domain.ACCOUNT_CREATION_SUCCESS)
+	u.RespondWithJSON(w, http.StatusOK, u.Message(false, domain.ACCOUNT_CREATION_SUCCESS))
 }
 
 //Authenticate ...
@@ -45,8 +51,8 @@ func (auth *AuthController) Authenticate(w http.ResponseWriter, r *http.Request)
 }
 
 //Logout used to logout. Deleted the stored access token in the redis cache
-func (auth *AuthController)  Logout(w http.ResponseWriter, r *http.Request) {
-	au, err := mw.ExtractTokenMetaData(r)
+func (auth *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+	au, err := u.ExtractTokenMetaData(r)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Unauthorized"))
 		return
@@ -60,7 +66,7 @@ func (auth *AuthController)  Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 //Refresh used to refresh the current refresh token gives back a new refresh and access
-func Refresh(w http.ResponseWriter, r *http.Request) {
+func (auth *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 	mapToken := map[string]string{}
 	if err := json.NewDecoder(r.Body).Decode(&mapToken); err != nil {
 		u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, "Invalid Map token"))
@@ -72,7 +78,7 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(u.GetEnv().RefreshSecret), nil
+		return []byte(util.GetEnv().RefreshSecret), nil
 	})
 	if err != nil {
 		u.RespondWithError(w, http.StatusUnauthorized, u.Message(false, "Refresh Token has expired"))
@@ -91,25 +97,25 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 			u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, fmt.Sprintf("%v", err)))
 			return
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["account_id"]), 10, 64)
-		if err != nil {
+		userId, err := claims["account_id"].(string)
+		if !err {
 			u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, "Error occured"))
 			return
 		}
 		//Delete the previous Refresh Token
-		deleted, delErr := model.DeleteAuth(refreshUuid)
-		if delErr != nil || deleted == 0 { //if any goes wrong
+		delErr := auth.accServ.DeleteAuth(refreshUuid)
+		if delErr != nil { //if any goes wrong
 			u.RespondWithError(w, http.StatusUnauthorized, u.Message(false, "Unauthorized"))
 			return
 		}
 		//Create new pairs of refresh and access tokens
-		ts, createErr := model.CreateToken(uint(userId))
+		ts, createErr := auth.accServ.CreateToken(userId)
 		if createErr != nil {
 			u.RespondWithError(w, http.StatusForbidden, u.Message(false, createErr.Error()))
 			return
 		}
 		//save the tokens metadata to redis
-		saveErr := model.CreateAuth(uint(userId), ts)
+		saveErr := auth.accServ.CreateAuth(userId, ts)
 		if saveErr != nil {
 			u.RespondWithError(w, http.StatusForbidden, u.Message(false, saveErr.Error()))
 			return

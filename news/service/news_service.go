@@ -14,7 +14,7 @@ type NewsServ struct {
 	cache domain.NewsCacheRepository
 }
 
-func ConstructService(r domain.NewsDBRepository, c domain.NewsCacheRepository) *NewsServ {
+func ConstructNewsService(r domain.NewsDBRepository, c domain.NewsCacheRepository) *NewsServ {
 	return &NewsServ{
 		db:    r,
 		cache: c,

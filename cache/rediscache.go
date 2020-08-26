@@ -8,25 +8,26 @@ import (
 	"github.com/jmattson4/go-sample-api/util"
 )
 
-var Client *redis.Client
-
-func init() {
-	hn := util.GetEnv().RedisHostname
-	port := util.GetEnv().RedisPort
+//InitRedisCache Creates a redis cache to be used throughout the Repository.
+func InitRedisCache(env *util.Environmentals, dbNumber int) *redis.Client {
+	hn := env.RedisHostname
+	port := env.RedisPort
 	dsn := fmt.Sprintf("%v:%v", hn, port)
-	pw := util.GetEnv().RedisPassword
+	pw := env.RedisPassword
 
 	if len(dsn) == 0 {
 		dsn = "cache:6379"
 	}
-	Client = redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:     dsn,
 		Password: pw,
+		DB:       dbNumber,
 	})
-	_, err := Client.Ping().Result()
+	_, err := client.Ping().Result()
 	if err != nil {
 		panic(err)
 	} else {
 		fmt.Println("Connection to redis was a success!")
 	}
+	return client
 }

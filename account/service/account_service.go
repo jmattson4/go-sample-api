@@ -2,8 +2,11 @@ package service
 
 import (
 	"strings"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jmattson4/go-sample-api/domain"
+	"github.com/jmattson4/go-sample-api/util"
 	"github.com/twinj/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,6 +16,14 @@ type AccountService struct {
 	cacheRepo domain.AccountCacheRepo
 }
 
+func ConstructAccountService(repoDB domain.AccountDBRepo, repoCache domain.AccountCacheRepo) *AccountService {
+	return &AccountService{
+		dbRepo:    repoDB,
+		cacheRepo: repoCache,
+	}
+}
+
+//Gets an account given a UUID associated to that account.
 func (as *AccountService) GetAccount(uuid *uuid.UUID) (*domain.Account, error) {
 	acc, err := as.dbRepo.GetAccount(uuid)
 	if err != nil {
@@ -21,6 +32,7 @@ func (as *AccountService) GetAccount(uuid *uuid.UUID) (*domain.Account, error) {
 	return acc, nil
 }
 
+//GetAccountByEmail Grabs an account by the given email name.
 func (as *AccountService) GetAccountByEmail(email string) (*domain.Account, error) {
 	if len(email) < 0 {
 		return nil, domain.ACCOUNT_EMAIL_EMPTY
@@ -35,6 +47,7 @@ func (as *AccountService) GetAccountByEmail(email string) (*domain.Account, erro
 	return acc, nil
 }
 
+//Create 's a account in the database if user given info passes the validation requirements.
 func (as *AccountService) Create(email, password string) error {
 	valErr := as.validate(email, password)
 	if valErr != nil {
@@ -63,11 +76,11 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 	account.Password = ""
 
 	//Create JWT tokens
-	ts, err := as.cacheRepo.CreateToken(account.ID)
+	ts, err := as.CreateToken(account.ID.String())
 	if err != nil {
 		return nil, domain.ACCOUNT_TOKEN_CREATION_ERROR
 	}
-	saveErr := as.cacheRepo.CreateAuth(account.ID, ts)
+	saveErr := as.cacheRepo.CreateAuth(account.ID.String(), ts)
 
 	if saveErr != nil {
 		return nil, domain.ACCOUNT_CACHE_AUTH_CREATION
@@ -80,9 +93,74 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 
 }
 
+//Logout used to delete a given accessUUID so that the user is logged out and cannot use that access token any longer
 func (as *AccountService) Logout(accessUuid string) error {
 	_, err := as.cacheRepo.DeleteAuth(accessUuid)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//CreateToken : Function used to generate a access token that expires in 15 minutes and a Refresh Token that expries in 7 days
+func (as *AccountService) CreateToken(accountUUID string) (*domain.TokenDetails, error) {
+	accessSecret := util.GetEnv().AccessSecret
+	refreshSecret := util.GetEnv().RefreshSecret
+	//Create token details setting
+	td := &domain.TokenDetails{}
+	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
+	td.AccessUuid = uuid.NewV4().String()
+
+	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
+	td.RefreshUuid = uuid.NewV4().String()
+
+	var err error
+
+	atClaims := jwt.MapClaims{}
+	atClaims["authorized"] = true
+	atClaims["access_uuid"] = td.AccessUuid
+	atClaims["account_id"] = accountUUID
+	atClaims["exp"] = td.AtExpires
+	at := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), atClaims)
+	td.AccessToken, err = at.SignedString([]byte(accessSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	rtClaims := jwt.MapClaims{}
+	rtClaims["refresh_uuid"] = td.RefreshUuid
+	rtClaims["account_id"] = accountUUID
+	rtClaims["exp"] = td.RtExpires
+	rt := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), rtClaims)
+	td.RefreshToken, err = rt.SignedString([]byte(refreshSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	return td, nil
+
+}
+
+func (as *AccountService) CreateAuth(accountUUID string, td *domain.TokenDetails) error {
+	err := as.cacheRepo.CreateAuth(accountUUID, td)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//GetAuth Used to get a userID for a given accessUUID as a string
+func (as *AccountService) GetAuth(accessUUID string) (string, error) {
+	userID, err := as.cacheRepo.GetAuth(accessUUID)
+	if err != nil {
+		return "", err
+	}
+	return userID, nil
+}
+
+func (as *AccountService) DeleteAuth(givenuuid string) error {
+	deleted, err := as.cacheRepo.DeleteAuth(givenuuid)
+	if err != nil || deleted == 0 {
 		return err
 	}
 	return nil
