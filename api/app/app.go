@@ -56,6 +56,7 @@ func (a *App) initializeRoutes(auth *c.AuthController, n *c.NewsController) {
 
 	a.Router.HandleFunc("/api/news/{newsname}", n.GetNewsByWebName).Methods("GET")
 	a.Router.HandleFunc("/api/news/{newsname}/{id}", n.GetNewsArticleByID).Methods("GET")
+	a.Router.HandleFunc("/api/news/{newsname}/scrape", n.PullNewsData).Methods("POST")
 
 	a.Router.HandleFunc("/api/user/new", auth.CreateAccount).Methods("POST")
 	a.Router.HandleFunc("/api/user/login", auth.Authenticate).Methods("POST")

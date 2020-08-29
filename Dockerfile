@@ -6,5 +6,7 @@ WORKDIR /go/src/app
 
 
 
-RUN go get -v
+RUN go get -v ./api
+RUN go install ./api
+
 

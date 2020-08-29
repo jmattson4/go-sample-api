@@ -49,7 +49,6 @@ func AccountConstructor(email string, password string, role string) *Account {
 type AccountDBRepo interface {
 	GetAccount(uuid *uuid.UUID) (*Account, error)
 	Create(email string, password string) error
-	Construct(interface{}) interface{}
 	GetAccountByEmail(email string) (*Account, error)
 }
 

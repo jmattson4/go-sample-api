@@ -144,12 +144,9 @@ func (serv *NewsServ) GetMultipleNews(start int, count int, news []*domain.NewsD
 		return err
 	}
 
-	cacheErr := serv.cache.GetMultipleNews(start, count, news)
-	if cacheErr != nil {
-		err := serv.db.GetMultipleNews(start, count, news)
-		if err != nil {
-			return err
-		}
+	err := serv.db.GetMultipleNews(start, count, news)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -175,17 +172,14 @@ func (serv *NewsServ) GetMultipleNewsByWebName(start, count int, news []*domain.
 func (s *NewsServ) ProcessNewsData(
 	processAmount uint,
 	websiteName string,
-	articleLink []string,
-	articleText []string,
-	imageURL []string,
-	paragraphs []string) error {
+	raw *domain.RawNewsData) error {
 
-	if processAmount > uint(len(articleLink)) {
-		processAmount = uint(len(articleLink))
+	if processAmount > uint(len(raw.ArticleLink)) {
+		processAmount = uint(len(raw.ArticleLink))
 	}
 	newsDataSlice := []*domain.NewsData{}
 	for i := uint(1); i < processAmount; i++ {
-		newsData := domain.NewsDataInit(articleLink[i], articleText[i], imageURL[i], paragraphs[i-1], websiteName, i)
+		newsData := domain.NewsDataInit(raw.ArticleLink[i], raw.ArticleText[i], raw.ImageURL[i], raw.Paragraphs[i-1], websiteName, i)
 		newsDataSlice = append(newsDataSlice, newsData)
 	}
 	for i := 0; i < len(newsDataSlice); i++ {

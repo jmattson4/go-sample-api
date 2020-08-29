@@ -12,7 +12,8 @@ import (
 )
 
 type NewsController struct {
-	newsServ *news.NewsServ
+	newsServ          *news.NewsServ
+	scraperServiceMap map[string]domain.RawNewsService
 }
 
 func ConstructNewsController(newserv *news.NewsServ) *NewsController {
@@ -71,6 +72,22 @@ func (cntrl *NewsController) GetNewsArticleByID(w http.ResponseWriter, r *http.R
 		return
 	}
 	u.RespondWithJSON(w, http.StatusOK, newsArticle)
+}
+
+func (cntrl *NewsController) PullNewsData(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	webName := checkWebName(vars, w)
+	scrapeServ := cntrl.FindScraperService(webName)
+	rawData := scrapeServ.RawNewsScrape()
+	//if rawData.
+}
+
+func (cntrl *NewsController) FindScraperService(webname string) domain.RawNewsService {
+	scrapeServ := cntrl.scraperServiceMap[webname]
+	if scrapeServ == nil {
+		return nil
+	}
+	return scrapeServ
 }
 
 func checkWebName(vars map[string]string, w http.ResponseWriter) string {

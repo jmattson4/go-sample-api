@@ -28,7 +28,7 @@ func InitNewsDB(env *util.Environmentals) *gorm.DB {
 		} else {
 			conn.DB().SetConnMaxLifetime(20 * time.Second)
 			conn.DB().SetMaxIdleConns(30)
-			fmt.Println("Connection to News database wassuccesful.")
+			fmt.Println("Connection to News database was succesful.")
 			conn.Debug().AutoMigrate(&domain.NewsData{}) //Database migration
 			return conn
 		}

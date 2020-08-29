@@ -21,7 +21,7 @@ func TestGet(t *testing.T) {
 		mockNewsCacheRepo := new(mocks.NewsCacheRepository)
 		mockNewsDbRepo := new(mocks.NewsDBRepository)
 		mockNewsCacheRepo.On("Get", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		news := domain.NewsDataBasicInit()
 		news.ID = mockNews.ID
@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 		mockNewsCacheRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 		mockNewsDbRepo.On("Get", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		news := domain.NewsDataBasicInit()
 		news.ID = mockNews.ID
@@ -61,7 +61,7 @@ func TestGet(t *testing.T) {
 		mockNewsCacheRepo.On("Get", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_STANDARD_TESTING_ERROR).Once()
 		mockNewsDbRepo.On("Get", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_STANDARD_TESTING_ERROR).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		news := domain.NewsDataBasicInit()
 		news.ID = mockNews.ID
@@ -86,7 +86,7 @@ func TestCreate(t *testing.T) {
 		mockNewsCacheRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 		mockNewsDbRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Create(mockNews)
 
@@ -103,7 +103,7 @@ func TestCreate(t *testing.T) {
 		mockNewsCacheRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_CACHE_CREATION_ERROR).Once()
 		mockNewsDbRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Create(mockNews)
 
@@ -119,7 +119,7 @@ func TestCreate(t *testing.T) {
 		mockNewsDbRepo := new(mocks.NewsDBRepository)
 		mockNewsDbRepo.On("Create", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_DB_CREATION_ERROR).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Create(mockNews)
 
@@ -140,7 +140,7 @@ func TestUpdate(t *testing.T) {
 		mockNewsCacheRepo.On("Update", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 		mockNewsDbRepo.On("Update", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Update(mockNews)
 
@@ -157,7 +157,7 @@ func TestUpdate(t *testing.T) {
 		mockNewsCacheRepo.On("Update", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_CACHE_UPDATE_ERROR).Once()
 		mockNewsDbRepo.On("Update", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Update(mockNews)
 
@@ -173,7 +173,7 @@ func TestUpdate(t *testing.T) {
 		mockNewsDbRepo := new(mocks.NewsDBRepository)
 		mockNewsDbRepo.On("Update", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_DB_UPDATE_ERROR).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Update(mockNews)
 
@@ -193,7 +193,7 @@ func TestDelete(t *testing.T) {
 		mockNewsCacheRepo.On("Delete", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 		mockNewsDbRepo.On("Delete", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Delete(mockNews)
 
@@ -210,7 +210,7 @@ func TestDelete(t *testing.T) {
 		mockNewsCacheRepo.On("Delete", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_CACHE_DELETE_ERROR).Once()
 		mockNewsDbRepo.On("Delete", mock.AnythingOfType("*domain.NewsData")).Return(nil).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Delete(mockNews)
 
@@ -226,7 +226,7 @@ func TestDelete(t *testing.T) {
 		mockNewsDbRepo := new(mocks.NewsDBRepository)
 		mockNewsDbRepo.On("Delete", mock.AnythingOfType("*domain.NewsData")).Return(domain.NEWS_DB_DELETE_ERROR).Once()
 
-		u := service.ConstructService(mockNewsDbRepo, mockNewsCacheRepo)
+		u := service.ConstructNewsService(mockNewsDbRepo, mockNewsCacheRepo)
 
 		err := u.Delete(mockNews)
 

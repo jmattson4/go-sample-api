@@ -33,7 +33,7 @@ var env *Environmentals
 //init ...
 //This function is used to inject a data structure which contains the environmental
 //	variables into the system where needed.
-func init() {
+func ConstuctEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Print("Error loading .env file. Trying Different route")

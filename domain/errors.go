@@ -29,4 +29,6 @@ var (
 
 	JWT_CANNOT_FIND_PROPERTY_ACCESS  error = errors.New("Cannot find Access UUID property. May be null or empty.")
 	JWT_CANNOT_FIND_PROPERTY_ACCOUNT error = errors.New("Cannot find AccountID property. May be null or empty.")
+
+	SCRAPER_GLOBAL_NEWS_CANT_FIND_URL error = errors.New("Cannot find any pages associated with the given URL : Global News Scraper")
 )

@@ -80,18 +80,3 @@ func (repo *NewsCacheRepo) Get(news *domain.NewsData) error {
 	}
 	return err
 }
-
-func (repo *NewsCacheRepo) GetMultipleNews(start int, count int, news []*domain.NewsData) error {
-	st := start
-	var err error
-	for i := 0; i < count; i++ {
-		newsData := domain.NewsDataBasicInit()
-		newsData.ID = uint(st)
-		if err = repo.Get(newsData); err != nil {
-			return err
-		}
-		news = append(news, newsData)
-
-	}
-	return nil
-}

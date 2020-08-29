@@ -47,7 +47,7 @@ services:
     app:
         container_name: goapp
         build: .
-        command: ./wait-for-it.sh udb:5432 -- go run main.go
+        command: ./wait-for-it.sh udb:5432 -- go run api/main.go
         volumes:
             - .:/go/src/app
         ports:

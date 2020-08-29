@@ -58,7 +58,6 @@ func NewsDataInit(al string, at string, img string, p string, webN string, artN 
 
 type NewsCacheRepository interface {
 	Get(news *NewsData) error
-	GetMultipleNews(start int, count int, news []*NewsData) error
 	Create(news *NewsData) error
 	Update(news *NewsData) error
 	Delete(news *NewsData) error
@@ -90,8 +89,5 @@ type NewsService interface {
 	ProcessNewsData(
 		processAmount uint,
 		websiteName string,
-		articleLink []string,
-		articleText []string,
-		imageURL []string,
-		paragraphs []string) error
+		raw *RawNewsData) error
 }

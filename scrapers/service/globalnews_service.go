@@ -1,39 +1,25 @@
-package scrapers
+package service
 
 import (
 	"log"
 	"strings"
 
+	"github.com/jmattson4/go-sample-api/domain"
+
 	"github.com/PuerkitoBio/goquery"
+	u "github.com/jmattson4/go-sample-api/util"
 )
 
-//GlobalNewsData ... Struct is used to model the data taken from the GlobalNewsMainpage
-type GlobalNewsData struct {
-	ArticleLink []string
-	ArticleText []string
-	ImageURL    []string
-	Paragraphs  []string
-}
-
-//Factory function for creation of GlobalNewsData Struct.
-func newGlobalNewsData(articleLink []string, text []string, imageURL []string, paragraphs []string) *GlobalNewsData {
-
-	data := GlobalNewsData{
-		ArticleLink: articleLink,
-		ArticleText: text,
-		ImageURL:    imageURL,
-		Paragraphs:  paragraphs,
-	}
-
-	return &data
+type GlobalNewsScraperService struct {
 }
 
 //MainPageScrape ... This scrapes the mainpage of globalnew.ca returning
 //	the links, text and img links of the top stories for the day.
-func GlobalNewsScrape() *GlobalNewsData {
+func GlobalNewsScrape() (*domain.RawNewsData, error) {
 	doc, err := goquery.NewDocument("https://globalnews.ca")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(domain.SCRAPER_GLOBAL_NEWS_CANT_FIND_URL)
+		return nil, domain.SCRAPER_GLOBAL_NEWS_CANT_FIND_URL
 	}
 	var textSlice []string
 	var linkSlice []string
@@ -54,29 +40,38 @@ func GlobalNewsScrape() *GlobalNewsData {
 		linkSlice = append(linkSlice, linkHref)
 	})
 
-	linkSlice = unique(linkSlice)
-	textSlice = unique(textSlice)
-	imgSlice = unique(imgSlice)
-	paragraphSlice = scrapeArticles(linkSlice)
+	linkSlice = u.Unique(linkSlice)
+	textSlice = u.Unique(textSlice)
+	imgSlice = u.Unique(imgSlice)
+	paragraphSlice, err = scrapeArticles(linkSlice)
 
-	return newGlobalNewsData(linkSlice, textSlice, imgSlice, paragraphSlice)
+	if err != nil {
+		return nil, err
+	}
+
+	return domain.NewRawNewsData(linkSlice, textSlice, imgSlice, paragraphSlice), nil
 }
 
-func scrapeArticles(articleLinkSlice []string) []string {
+//takes all the article links from the initial page scrape then goes to the pages scraping more data relevant to the article,
+func scrapeArticles(articleLinkSlice []string) ([]string, error) {
 	articleParagraphs := []string{}
 
 	for i := 1; i < len(articleLinkSlice); i++ {
-		paragraph := articleScrape(articleLinkSlice[i])
+		paragraph, err := articleScrape(articleLinkSlice[i])
+		if err != nil {
+			return nil, err
+		}
 		articleParagraph := articleToParagraph(paragraph)
 		articleParagraphs = append(articleParagraphs, articleParagraph)
 	}
-	return articleParagraphs
+	return articleParagraphs, nil
 }
 
-func articleScrape(linkSlice string) []string {
+func articleScrape(linkSlice string) ([]string, error) {
 	doc, err := goquery.NewDocument(linkSlice)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(domain.SCRAPER_GLOBAL_NEWS_CANT_FIND_URL.Error())
+		return nil, domain.SCRAPER_GLOBAL_NEWS_CANT_FIND_URL
 	}
 	paragraphSlice := []string{}
 	article := doc.Find("article")
@@ -84,7 +79,7 @@ func articleScrape(linkSlice string) []string {
 		text := strings.TrimSpace(item.Text())
 		paragraphSlice = append(paragraphSlice, text)
 	})
-	return paragraphSlice
+	return paragraphSlice, nil
 }
 
 func articleToParagraph(paragraphs []string) string {
@@ -93,17 +88,4 @@ func articleToParagraph(paragraphs []string) string {
 		paragraph = paragraph + " " + pString
 	}
 	return paragraph
-}
-
-//Function makes sure that everything that is pulled back is unique.
-func unique(stringSlice []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range stringSlice {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
 }
