@@ -30,17 +30,23 @@ type Environmentals struct {
 
 var env *Environmentals
 
-//init ...
+//ConstructEnv ...
 //This function is used to inject a data structure which contains the environmental
 //	variables into the system where needed.
-func ConstuctEnv() {
+func ConstructEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Print("Error loading .env file. Trying Different route")
-		err := godotenv.Load("../.env")
+		err := godotenv.Load("./.env")
 		if err != nil {
-			log.Fatal("Error loading .env file. File probably isnt in system.")
+			currentEnvironment, _ := os.LookupEnv("ENVIRONMENT")
+			log.Print("Error loading .env file. Checking one more location")
+			err2 := godotenv.Load(os.ExpandEnv("$GOPATH/src/github.com/jmattson4/go-sample-api/.env" + currentEnvironment))
+			if err2 != nil {
+				log.Fatal("Error loading .env file. File probably isnt in system.")
+			}
 		}
+
 	}
 	env = &Environmentals{
 		AccountDBService:    os.Getenv("ACCOUNT_DB_SERVICE"),
@@ -58,8 +64,8 @@ func ConstuctEnv() {
 		RedisPassword:       os.Getenv("REDIS_PASSWORD"),
 		RedisPort:           os.Getenv("REDIS_PORT"),
 		RedisHostname:       os.Getenv("REDIS_HOSTNAME"),
-		JWTCacheDB:          os.Getenv("JWT_CACHE_DB"),
-		NewsCacheDB:         os.Getenv("NEWS_CACH_DB"),
+		JWTCacheDB:          os.Getenv("JWT_CACHE"),
+		NewsCacheDB:         os.Getenv("NEWS_CACHE"),
 	}
 }
 

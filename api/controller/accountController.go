@@ -12,52 +12,64 @@ import (
 	"github.com/jmattson4/go-sample-api/util"
 )
 
-type AuthController struct {
+//AccountController ...
+type AccountController struct {
 	accServ *acc.AccountService
 }
 
-func ConstructAuthController(acc *acc.AccountService) *AuthController {
-	return &AuthController{
+//AccountController ...
+func ConstructAccountController(acc *acc.AccountService) *AccountController {
+	return &AccountController{
 		accServ: acc,
 	}
 }
 
-//CreateAccount ...
-func (auth *AuthController) CreateAccount(w http.ResponseWriter, r *http.Request) {
-
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-
-	err := auth.accServ.Create(email, password) //Create account
+//AccountController ...
+func (acc *AccountController) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
+	accs, err := acc.accServ.GetAccounts()
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
 		return
 	}
-	u.RespondWithJSON(w, http.StatusOK, u.Message(false, domain.ACCOUNT_CREATION_SUCCESS))
+	u.RespondWithJSON(w, http.StatusOK, accs)
+}
+
+//CreateAccount ...
+func (acc *AccountController) CreateAccount(w http.ResponseWriter, r *http.Request) {
+
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	err := acc.accServ.Create(email, password) //Create account
+	if err != nil {
+		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
+		return
+	}
+	u.RespondWithJSON(w, http.StatusOK, u.Message(true, domain.ACCOUNT_CREATION_SUCCESS))
 }
 
 //Authenticate ...
-func (auth *AuthController) Authenticate(w http.ResponseWriter, r *http.Request) {
+func (acc *AccountController) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	acc, err := auth.accServ.Login(email, password)
+	account, err := acc.accServ.Login(email, password)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, fmt.Sprintf("Error: %v", err.Error())))
 		return
 	}
-	u.RespondWithJSON(w, http.StatusOK, acc)
+	u.RespondWithJSON(w, http.StatusOK, account)
 }
 
 //Logout used to logout. Deleted the stored access token in the redis cache
-func (auth *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+func (acc *AccountController) Logout(w http.ResponseWriter, r *http.Request) {
 	au, err := u.ExtractTokenMetaData(r)
 	if err != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Unauthorized"))
 		return
 	}
-	delErr := auth.accServ.Logout(au.AccessUuid)
+	delErr := acc.accServ.Logout(au.AccessUuid)
 	if delErr != nil {
 		u.RespondWithError(w, http.StatusForbidden, u.Message(false, "Cannot Deleted: Unauthorized"))
 		return
@@ -66,7 +78,7 @@ func (auth *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 //Refresh used to refresh the current refresh token gives back a new refresh and access
-func (auth *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
+func (acc *AccountController) Refresh(w http.ResponseWriter, r *http.Request) {
 	mapToken := map[string]string{}
 	if err := json.NewDecoder(r.Body).Decode(&mapToken); err != nil {
 		u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, "Invalid Map token"))
@@ -92,30 +104,30 @@ func (auth *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 	//Since token is valid, get the uuid:
 	claims, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
 	if ok && token.Valid {
-		refreshUuid, ok := claims["refresh_uuid"].(string) //convert the interface to string
+		refreshUUID, ok := claims["refresh_uuid"].(string) //convert the interface to string
 		if !ok {
 			u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, fmt.Sprintf("%v", err)))
 			return
 		}
-		userId, err := claims["account_id"].(string)
+		userID, err := claims["account_id"].(string)
 		if !err {
 			u.RespondWithError(w, http.StatusUnprocessableEntity, u.Message(false, "Error occured"))
 			return
 		}
 		//Delete the previous Refresh Token
-		delErr := auth.accServ.DeleteAuth(refreshUuid)
+		delErr := acc.accServ.DeleteAuth(refreshUUID)
 		if delErr != nil { //if any goes wrong
 			u.RespondWithError(w, http.StatusUnauthorized, u.Message(false, "Unauthorized"))
 			return
 		}
 		//Create new pairs of refresh and access tokens
-		ts, createErr := auth.accServ.CreateToken(userId)
+		ts, createErr := acc.accServ.CreateToken(userID)
 		if createErr != nil {
 			u.RespondWithError(w, http.StatusForbidden, u.Message(false, createErr.Error()))
 			return
 		}
 		//save the tokens metadata to redis
-		saveErr := auth.accServ.CreateAuth(userId, ts)
+		saveErr := acc.accServ.CreateAuth(userID, ts)
 		if saveErr != nil {
 			u.RespondWithError(w, http.StatusForbidden, u.Message(false, saveErr.Error()))
 			return

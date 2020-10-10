@@ -11,11 +11,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+//AccountService ...
+//Holds the cache and db repo for Accounts
 type AccountService struct {
 	dbRepo    domain.AccountDBRepo
 	cacheRepo domain.AccountCacheRepo
 }
 
+//ConstructAccountService ...
 func ConstructAccountService(repoDB domain.AccountDBRepo, repoCache domain.AccountCacheRepo) *AccountService {
 	return &AccountService{
 		dbRepo:    repoDB,
@@ -23,9 +26,20 @@ func ConstructAccountService(repoDB domain.AccountDBRepo, repoCache domain.Accou
 	}
 }
 
+//GetAccount ...
 //Gets an account given a UUID associated to that account.
 func (as *AccountService) GetAccount(uuid *uuid.UUID) (*domain.Account, error) {
 	acc, err := as.dbRepo.GetAccount(uuid)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
+}
+
+//GetAccounts ...
+//Gets all accounts
+func (as *AccountService) GetAccounts() ([]domain.Account, error) {
+	acc, err := as.dbRepo.GetAccounts()
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +67,10 @@ func (as *AccountService) Create(email, password string) error {
 	if valErr != nil {
 		return valErr
 	}
+	// checkErr := as.checkIfEmailExists(email)
+	// if checkErr != nil && checkErr != domain.ACCOUNT_EMAIL_CANT_FIND {
+	// 	return checkErr
+	// }
 	createErr := as.dbRepo.Create(email, password)
 	if createErr != nil {
 		return createErr
@@ -62,7 +80,6 @@ func (as *AccountService) Create(email, password string) error {
 
 //Login ... allows the user to login
 func (as *AccountService) Login(email, password string) (*domain.Account, error) {
-
 	account, err := as.GetAccountByEmail(email)
 	if err != nil {
 		return nil, err
@@ -94,8 +111,8 @@ func (as *AccountService) Login(email, password string) (*domain.Account, error)
 }
 
 //Logout used to delete a given accessUUID so that the user is logged out and cannot use that access token any longer
-func (as *AccountService) Logout(accessUuid string) error {
-	_, err := as.cacheRepo.DeleteAuth(accessUuid)
+func (as *AccountService) Logout(accessUUID string) error {
+	_, err := as.cacheRepo.DeleteAuth(accessUUID)
 	if err != nil {
 		return err
 	}
@@ -109,16 +126,16 @@ func (as *AccountService) CreateToken(accountUUID string) (*domain.TokenDetails,
 	//Create token details setting
 	td := &domain.TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
-	td.AccessUuid = uuid.NewV4().String()
+	td.AccessUUID = uuid.NewV4().String()
 
 	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
-	td.RefreshUuid = uuid.NewV4().String()
+	td.RefreshUUID = uuid.NewV4().String()
 
 	var err error
 
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
-	atClaims["access_uuid"] = td.AccessUuid
+	atClaims["access_uuid"] = td.AccessUUID
 	atClaims["account_id"] = accountUUID
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), atClaims)
@@ -128,7 +145,7 @@ func (as *AccountService) CreateToken(accountUUID string) (*domain.TokenDetails,
 	}
 
 	rtClaims := jwt.MapClaims{}
-	rtClaims["refresh_uuid"] = td.RefreshUuid
+	rtClaims["refresh_uuid"] = td.RefreshUUID
 	rtClaims["account_id"] = accountUUID
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), rtClaims)
@@ -141,6 +158,8 @@ func (as *AccountService) CreateToken(accountUUID string) (*domain.TokenDetails,
 
 }
 
+//CreateAuth ...
+// Used to create an authorization token and store it in the token cache
 func (as *AccountService) CreateAuth(accountUUID string, td *domain.TokenDetails) error {
 	err := as.cacheRepo.CreateAuth(accountUUID, td)
 	if err != nil {
@@ -158,6 +177,8 @@ func (as *AccountService) GetAuth(accessUUID string) (string, error) {
 	return userID, nil
 }
 
+//DeleteAuth ...
+//USed to delete an auth token from the cache repo
 func (as *AccountService) DeleteAuth(givenuuid string) error {
 	deleted, err := as.cacheRepo.DeleteAuth(givenuuid)
 	if err != nil || deleted == 0 {
@@ -176,6 +197,11 @@ func (as *AccountService) validate(email, password string) error {
 		return domain.ACCOUNT_PASSWORD_TOO_SHORT
 	}
 
+	return nil
+}
+
+//checkIfEmailExists checks the db seeing if email address already exists
+func (as *AccountService) checkIfEmailExists(email string) error {
 	//check for errors and duplicate emails
 	temp, err := as.GetAccountByEmail(email)
 	if err != nil {

@@ -13,7 +13,9 @@ import (
 type GlobalNewsScraperService struct {
 }
 
-//MainPageScrape ... This scrapes the mainpage of globalnew.ca returning
+//GlobalNewsScrape ...
+//	Implementation of RawNewsService
+//	This scrapes the mainpage of globalnew.ca returning
 //	the links, text and img links of the top stories for the day.
 func GlobalNewsScrape() (*domain.RawNewsData, error) {
 	doc, err := goquery.NewDocument("https://globalnews.ca")

@@ -5,19 +5,18 @@ import (
 	"time"
 
 	"github.com/jmattson4/go-sample-api/domain"
-	"github.com/jmattson4/go-sample-api/util"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 )
 
-//InitNewsDb Used to initiliaze a connection to the news db used for user accounts
-func InitNewsDB(env *util.Environmentals) *gorm.DB {
-	username := env.DatabaseUser
-	password := env.DatabasePassword
-	dbName := env.DatabaseName
-	dbHost := env.DatabaseDBService
-	dbPort := env.DatabaseDBPort
+//InitNewsDB Used to initiliaze a connection to the news db used for user accounts
+func InitNewsDB(dbUser string, dbPW string, dbN string, dbService string, dbP string) *gorm.DB {
+	username := dbUser
+	password := dbPW
+	dbName := dbN
+	dbHost := dbService
+	dbPort := dbP
 
 	dbURI := fmt.Sprintf("host=%s sslmode=disable port=%s user=%s dbname=%s password=%s ", dbHost, dbPort, username, dbName, password)
 
@@ -36,13 +35,13 @@ func InitNewsDB(env *util.Environmentals) *gorm.DB {
 	return nil
 }
 
-//InitUserDb Used to initilaze a connection to the user db used for user accounts
-func InitAccountDB(env *util.Environmentals) *gorm.DB {
-	accountHost := env.AccountDBService
-	accountPort := env.AccountDBPort
-	accountUsername := env.AccountUser
-	accountPassword := env.AccountPassword
-	accountDBName := env.AccountDatabaseName
+//InitAccountDB Used to initilaze a connection to the user db used for user accounts
+func InitAccountDB(accDBServ string, accDBP string, accDBUSer string, accPW string, accDBN string) *gorm.DB {
+	accountHost := accDBServ
+	accountPort := accDBP
+	accountUsername := accDBUSer
+	accountPassword := accPW
+	accountDBName := accDBN
 
 	dbURI2 := fmt.Sprintf("host=%s sslmode=disable port=%s user=%s dbname=%s password=%s ", accountHost, accountPort, accountUsername, accountDBName, accountPassword)
 

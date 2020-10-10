@@ -3,6 +3,7 @@ volumes:
     udata:
     ndata:
     rdata:
+    pgadmin-data:
 services: 
     udb: 
         container_name: udb
@@ -63,6 +64,24 @@ services:
         networks:
             - basic
             - security
+
+    pgadmin:
+        image: dpage/pgadmin4
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: pwdpwd
+        ports:
+            - "5050:80"
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
+        links:
+            - udb
+        depends_on:
+            - udb
+        networks:
+            -  security
+
 networks:
     basic:
         driver: bridge

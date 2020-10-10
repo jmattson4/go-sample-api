@@ -22,6 +22,7 @@ type App struct {
 	Enforcer *casbin.Enforcer
 }
 
+//ConstructApp ...
 func ConstructApp(enf *casbin.Enforcer, accserv *accServ.AccountService, newserv *newsServ.NewsServ) *App {
 	app := &App{}
 	app.Router = mux.NewRouter()
@@ -38,30 +39,32 @@ func (a *App) Initialize() {
 	a.initializeRoutes(auth, n)
 }
 
-//Initialize To be used before application is run in order to connect to the database and create routes.
+//InitializeTesting ...
+//initialize To be used before application is run in order to connect to the database and create routes.
 func (a *App) InitializeTesting() {
 	auth, n := a.createControllers()
 	a.initializeRoutes(auth, n)
 }
 
-func (a *App) createControllers() (*c.AuthController, *c.NewsController) {
-	authController := c.ConstructAuthController(a.AccServ)
+func (a *App) createControllers() (*c.AccountController, *c.NewsController) {
+	authController := c.ConstructAccountController(a.AccServ)
 	newsController := c.ConstructNewsController(a.NewsServ)
 
 	return authController, newsController
 }
 
 //InitializeRoutes to be used to create all the routes on the API
-func (a *App) initializeRoutes(auth *c.AuthController, n *c.NewsController) {
+func (a *App) initializeRoutes(acc *c.AccountController, n *c.NewsController) {
 
 	a.Router.HandleFunc("/api/news/{newsname}", n.GetNewsByWebName).Methods("GET")
 	a.Router.HandleFunc("/api/news/{newsname}/{id}", n.GetNewsArticleByID).Methods("GET")
 	a.Router.HandleFunc("/api/news/{newsname}/scrape", n.PullNewsData).Methods("POST")
 
-	a.Router.HandleFunc("/api/user/new", auth.CreateAccount).Methods("POST")
-	a.Router.HandleFunc("/api/user/login", auth.Authenticate).Methods("POST")
-	a.Router.HandleFunc("/api/user/logout", auth.Logout).Methods("POST")
-	a.Router.HandleFunc("/api/user/refresh", auth.Refresh).Methods("POST")
+	a.Router.HandleFunc("/api/user/new", acc.CreateAccount).Methods("POST")
+	a.Router.HandleFunc("/api/user/login", acc.Authenticate).Methods("POST")
+	a.Router.HandleFunc("/api/user/logout", acc.Logout).Methods("POST")
+	a.Router.HandleFunc("/api/user/refresh", acc.Refresh).Methods("POST")
+	a.Router.HandleFunc("/api/users", acc.GetAllAccounts).Methods("GET")
 }
 
 func (a *App) initializeMiddleware() {

@@ -3,6 +3,7 @@ p, admin, /*, *
 p, anonymous, /api/user/new, (POST)
 p, anonymous, /api/user/login, (POST)
 p, anonymous, /api/user/refresh, (POST)
+p, anonymous, /api/users, (GET)
 
 p, user, /api/user/login, (POST)
 p, user, /api/user/logout, (POST)

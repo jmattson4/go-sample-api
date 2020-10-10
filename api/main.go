@@ -20,13 +20,23 @@ import (
 )
 
 func main() {
-	util.ConstuctEnv()
+	util.ConstructEnv()
 	env := util.GetEnv()
 
-	accountDb := db.InitAccountDB(env)
+	accountDb := db.InitAccountDB(
+		env.AccountDBService,
+		env.AccountDBPort,
+		env.AccountUser,
+		env.AccountPassword,
+		env.AccountDatabaseName)
 	accountCache := c.InitRedisCache(env, 0)
 
-	newsDb := db.InitNewsDB(env)
+	newsDb := db.InitNewsDB(
+		env.DatabaseUser,
+		env.DatabasePassword,
+		env.DatabaseName,
+		env.DatabaseDBService,
+		env.DatabaseDBPort)
 	newsCache := c.InitRedisCache(env, 5)
 
 	accPqlRepo := accPql.ConstructAccountsRepo(accountDb)

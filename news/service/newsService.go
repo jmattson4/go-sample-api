@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/twinj/uuid"
@@ -9,11 +8,17 @@ import (
 	"github.com/jmattson4/go-sample-api/domain"
 )
 
+//NewsServ ...
+// Description: struct which holds references to a db repo and a cache repo
 type NewsServ struct {
 	db    domain.NewsDBRepository
 	cache domain.NewsCacheRepository
 }
 
+//ConstructNewsService ...
+//	Params: r domain.NewsDBRepository, c domain.NewsCacheRepository.
+//	Returns: *NewsServ
+// 	Description: Factory function to create a NewsServ struct.
 func ConstructNewsService(r domain.NewsDBRepository, c domain.NewsCacheRepository) *NewsServ {
 	return &NewsServ{
 		db:    r,
@@ -21,7 +26,10 @@ func ConstructNewsService(r domain.NewsDBRepository, c domain.NewsCacheRepositor
 	}
 }
 
-//Create Params: news *model.NewsData; Returns: error; Description: Creates Scraped News Data piece
+//Create ...
+//	Params: news *model.NewsData;
+//	Returns: error;
+//	Description: Creates a row in the database for a given newsData piece
 func (serv *NewsServ) Create(news *domain.NewsData) error {
 	err := serv.db.Create(news)
 	if err != nil {
@@ -34,7 +42,10 @@ func (serv *NewsServ) Create(news *domain.NewsData) error {
 	return nil
 }
 
-//Update Params: news *model.NewsData; Returns: error; Description: Updates News Data piece
+//Update ...
+//	Params: news *model.NewsData;
+//	Returns: error;
+//	Description: Updates News Data piece
 func (serv *NewsServ) Update(news *domain.NewsData) error {
 	vErr := validateID(news.ID)
 	if vErr != nil {
@@ -50,6 +61,9 @@ func (serv *NewsServ) Update(news *domain.NewsData) error {
 	}
 	return nil
 }
+
+//Delete ...
+// This deletes the news item from the cache and the DB.
 func (serv *NewsServ) Delete(news *domain.NewsData) error {
 	vErr := validateID(news.ID)
 	if vErr != nil {
@@ -66,6 +80,8 @@ func (serv *NewsServ) Delete(news *domain.NewsData) error {
 	return nil
 }
 
+//HardDelete ...
+//	Pretty much the same implementation of Delete. Kind of need to possibly get rid of this function.
 func (serv *NewsServ) HardDelete(news *domain.NewsData) error {
 	vErr := validateID(news.ID)
 	if vErr != nil {
@@ -115,6 +131,11 @@ func (serv *NewsServ) GetByArticleLink(news *domain.NewsData) error {
 	}
 	return nil
 }
+
+//GetNewsByWebNameAndID ...
+//	Params: news *domain.NewsData
+//	Return: error
+// Description:
 func (serv *NewsServ) GetNewsByWebNameAndID(news *domain.NewsData) error {
 	vErr := validateID(news.ID)
 	if vErr != nil {
@@ -130,17 +151,20 @@ func (serv *NewsServ) GetNewsByWebNameAndID(news *domain.NewsData) error {
 	}
 	return nil
 }
+
+//GetMultipleNews ...
+//	Description: This gets multiple records from the database
 func (serv *NewsServ) GetMultipleNews(start int, count int, news []*domain.NewsData) error {
 	if start < 0 {
-		err := errors.New("Start must be greater than zero.")
+		err := domain.NEWS_SERVICE_GETMULTIPLENEWS_START
 		return err
 	}
 	if count < 0 {
-		err := errors.New("Count must be greater than zero.")
+		err := domain.NEWS_SERVICE_GETMULTIPLENEWS_COUNT
 		return err
 	}
 	if len(news) < 0 {
-		err := errors.New("Length of News Slice must be greater than 0")
+		err := domain.NEWS_SERVICE_GETMULTIPLENEWS_EMPTYSLICE
 		return err
 	}
 
@@ -150,13 +174,16 @@ func (serv *NewsServ) GetMultipleNews(start int, count int, news []*domain.NewsD
 	}
 	return nil
 }
+
+//GetMultipleNewsByWebName ...
+//	Description:
 func (serv *NewsServ) GetMultipleNewsByWebName(start, count int, news []*domain.NewsData, webName string) error {
 	if start < 0 {
-		err := errors.New("Start must be greater than zero.")
+		err := domain.NEWS_SERVICE_GETMULTIPLENEWS_START
 		return err
 	}
 	if count < 0 {
-		err := errors.New("count must be greater than zero.")
+		err := domain.NEWS_SERVICE_GETMULTIPLENEWS_COUNT
 		return err
 	}
 
@@ -169,7 +196,10 @@ func (serv *NewsServ) GetMultipleNewsByWebName(start, count int, news []*domain.
 	return nil
 }
 
-func (s *NewsServ) ProcessNewsData(
+//ProcessNewsData ...
+// Description: This function will process a bulk amount of newsData and enter it into the
+// database
+func (serv *NewsServ) ProcessNewsData(
 	processAmount uint,
 	websiteName string,
 	raw *domain.RawNewsData) error {
@@ -184,9 +214,9 @@ func (s *NewsServ) ProcessNewsData(
 	}
 	for i := 0; i < len(newsDataSlice); i++ {
 		newsD := newsDataSlice[i]
-		err := s.db.Create(newsD)
+		err := serv.db.Create(newsD)
 		if err != nil {
-			s.db.RollBack()
+			serv.db.RollBack()
 			return err
 		}
 	}
@@ -195,17 +225,21 @@ func (s *NewsServ) ProcessNewsData(
 }
 
 //Validation
-
+//validateID ...
+// Description: This function validates a uuid checking to see if it is nil
 func validateID(id uuid.UUID) error {
 	if uuid.IsNil(id) == true {
-		err := errors.New("News ID cannot be null or empty")
+		err := domain.NEWS_SERVICE_VALIDATEID_UUID_ISNIL
 		return err
 	}
 	return nil
 }
+
+//validateString ...
+// Description: This function checks to see if a string is empty.
 func validateString(s string, propertyName string) error {
 	if len(s) <= 0 {
-		err := errors.New(fmt.Sprintf("%v cannot be empty.", propertyName))
+		err := fmt.Errorf("%v cannot be empty", propertyName)
 		return err
 	}
 	return nil

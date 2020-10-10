@@ -1,22 +1,17 @@
 package domain
 
-import (
-	"github.com/jinzhu/gorm"
-	"github.com/twinj/uuid"
-)
-
 //NewsData .... Models Collected data from various scraped Canadian News Sites
 type NewsData struct {
-	gorm.Model
-	ID            uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	ArticleLink   string    `json:"articleLink" gorm:"not null"`
-	ArticleText   string    `json:"articleText"`
-	ImageURL      string    `json:"imageURL"`
-	Paragraph     string    `json:"paragraph"`
-	WebsiteName   string    `json:"websiteName"`
-	ArticleNumber uint      `json:"articleNumber"`
+	Base
+	ArticleLink   string `json:"articleLink" gorm:"not null"`
+	ArticleText   string `json:"articleText"`
+	ImageURL      string `json:"imageURL"`
+	Paragraph     string `json:"paragraph"`
+	WebsiteName   string `json:"websiteName"`
+	ArticleNumber uint   `json:"articleNumber"`
 }
 
+//NewsDataNoInit ...
 func NewsDataNoInit() *NewsData {
 	news := &NewsData{}
 	return news
@@ -25,9 +20,9 @@ func NewsDataNoInit() *NewsData {
 //NewsDataBasicInit ...
 //Description: Simple Factory
 func NewsDataBasicInit() *NewsData {
-	uuid := uuid.NewV4()
+	base := Base{}
 	news := &NewsData{
-		ID: uuid,
+		Base: base,
 	}
 	return news
 }
@@ -35,9 +30,7 @@ func NewsDataBasicInit() *NewsData {
 //NewsDataInit ...
 ///Description: factory function used to init  a NewsData struct
 func NewsDataInit(al string, at string, img string, p string, webN string, artN uint) *NewsData {
-	uuid := uuid.NewV4()
 	news := &NewsData{
-		ID:            uuid,
 		ArticleLink:   al,
 		ArticleText:   at,
 		ImageURL:      img,
